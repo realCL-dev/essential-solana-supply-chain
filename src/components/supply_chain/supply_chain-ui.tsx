@@ -510,7 +510,7 @@ export function QRScanner() {
       setIsScanning(true)
       
       // Wait for React to render the video element
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await new Promise(resolve => setTimeout(resolve, 300))
       
       if (!videoRef.current) {
         throw new Error('Video element not found')
@@ -520,22 +520,24 @@ export function QRScanner() {
       const qrScanner = new QrScanner(
         videoRef.current,
         (result) => {
-          console.log('QR Code detected:', result.data)
+          console.log('QR Code detected:', result)
           // Parse the scanned result to extract product address
           try {
-            const url = new URL(result.data)
+            const url = new URL(result)
             const productAddress = url.searchParams.get('scan')
             if (productAddress) {
               setScannedProductAddress(productAddress as Address)
-              stopScanning()
+              // Use setTimeout to avoid blocking the callback
+              setTimeout(() => stopScanning(), 100)
             } else {
               setError('Invalid QR code. Please scan a product QR code.')
             }
           } catch {
             // If it's not a URL, treat it as a direct product address
-            if (result.data.length === 44) { // Typical blockchain address length
-              setScannedProductAddress(result.data as Address)
-              stopScanning()
+            if (result.length === 44) { // Typical blockchain address length
+              setScannedProductAddress(result as Address)
+              // Use setTimeout to avoid blocking the callback
+              setTimeout(() => stopScanning(), 100)
             } else {
               setError('Invalid QR code format.')
             }
@@ -545,9 +547,21 @@ export function QRScanner() {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
           preferredCamera: 'environment',
-          maxScansPerSecond: 5,
+          maxScansPerSecond: 3,
+          calculationInterval: 200,
         }
       )
+
+      // Add canvas optimization after scanner starts
+      setTimeout(() => {
+        const canvas = videoRef.current?.parentElement?.querySelector('canvas')
+        if (canvas) {
+          const ctx = canvas.getContext('2d')
+          if (ctx && 'willReadFrequently' in ctx) {
+            (ctx as any).willReadFrequently = true
+          }
+        }
+      }, 500)
 
       await qrScanner.start()
       setScanner(qrScanner)
@@ -577,7 +591,7 @@ export function QRScanner() {
     }
   }
 
-  const stopScanning = useCallback(() => {
+  const stopScanning = useCallback(async () => {
     if (scanner) {
       try {
         scanner.stop()
