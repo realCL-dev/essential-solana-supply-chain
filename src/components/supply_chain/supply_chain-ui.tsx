@@ -603,16 +603,6 @@ export function QRScanner() {
       setScanner(null)
     }
     setIsScanning(false)
-    
-    // Restore the placeholder div
-    const videoElement = document.querySelector('#qr-scanner-video, video[style*="300px"]')
-    if (videoElement && videoElement.parentNode) {
-      const placeholder = document.createElement('div')
-      placeholder.id = 'qr-scanner-video'
-      placeholder.className = 'w-full h-[300px] bg-gray-200 rounded-lg flex items-center justify-center'
-      placeholder.innerHTML = '<p class="text-gray-500">Starting camera...</p>'
-      videoElement.parentNode.replaceChild(placeholder, videoElement)
-    }
   }, [scanner])
 
   useEffect(() => {
