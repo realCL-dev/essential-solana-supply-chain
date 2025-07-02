@@ -6,4 +6,5 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './supply_chain';
+export * from './product';
+export * from './supplyChainEvent';

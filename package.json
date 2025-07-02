@@ -2,7 +2,7 @@
   "name": "supply_chain",
   "scripts": {
     "anchor": "cd anchor && anchor",
-    "anchor-build": "cd anchor && anchor build",
+    "anchor-build": "cd anchor && npx anchor build",
     "anchor-client": "esrun ./anchor/src/generate-client.ts",
     "anchor-localnet": "cd anchor && anchor localnet",
     "anchor-test": "cd anchor && anchor test",
@@ -59,6 +59,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@project-serum/anchor-cli": "^0.31.1",
     "@tailwindcss/postcss": "^4.1.10",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.3",

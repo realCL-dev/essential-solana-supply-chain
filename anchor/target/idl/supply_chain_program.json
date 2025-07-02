@@ -1,0 +1,369 @@
+{
+  "address": "6saUBRn5SYZfoejFLjjm6wEULiQr3kbopVUdzttVmJmE",
+  "metadata": {
+    "name": "supply_chain_program",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "docs": [
+    "Supply Chain MVP Program"
+  ],
+  "instructions": [
+    {
+      "name": "initialize_product",
+      "docs": [
+        "Initialize a new product in the supply chain"
+      ],
+      "discriminator": [
+        251,
+        245,
+        7,
+        123,
+        247,
+        50,
+        14,
+        2
+      ],
+      "accounts": [
+        {
+          "name": "product_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  100,
+                  117,
+                  99,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "serial_number"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "serial_number",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "log_event",
+      "docs": [
+        "Log a new event for a product"
+      ],
+      "discriminator": [
+        5,
+        9,
+        90,
+        141,
+        223,
+        134,
+        57,
+        217
+      ],
+      "accounts": [
+        {
+          "name": "product_account",
+          "writable": true
+        },
+        {
+          "name": "event_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "product_account"
+              },
+              {
+                "kind": "account",
+                "path": "product_account.events_counter",
+                "account": "Product"
+              }
+            ]
+          }
+        },
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "event_type",
+          "type": {
+            "defined": {
+              "name": "EventType"
+            }
+          }
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "transfer_ownership",
+      "docs": [
+        "Transfer ownership of a product"
+      ],
+      "discriminator": [
+        65,
+        177,
+        215,
+        73,
+        53,
+        45,
+        99,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "product_account",
+          "writable": true
+        },
+        {
+          "name": "current_owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "new_owner",
+          "type": "pubkey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Product",
+      "discriminator": [
+        102,
+        76,
+        55,
+        251,
+        38,
+        73,
+        224,
+        229
+      ]
+    },
+    {
+      "name": "SupplyChainEvent",
+      "discriminator": [
+        211,
+        55,
+        255,
+        36,
+        84,
+        248,
+        218,
+        52
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidSerialNumber",
+      "msg": "Invalid serial number: must be 1-50 characters"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidDescription",
+      "msg": "Invalid description: must be 1-200 characters"
+    },
+    {
+      "code": 6002,
+      "name": "UnauthorizedAccess",
+      "msg": "Unauthorized access"
+    },
+    {
+      "code": 6003,
+      "name": "CounterOverflow",
+      "msg": "Counter overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "EventType",
+      "docs": [
+        "Types of events in the supply chain"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Created"
+          },
+          {
+            "name": "Shipped"
+          },
+          {
+            "name": "Received"
+          },
+          {
+            "name": "QualityCheck"
+          },
+          {
+            "name": "Delivered"
+          },
+          {
+            "name": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Product",
+      "docs": [
+        "Product account data"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "serial_number",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "ProductStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "events_counter",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProductStatus",
+      "docs": [
+        "Product status in the supply chain"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Created"
+          },
+          {
+            "name": "InTransit"
+          },
+          {
+            "name": "Received"
+          },
+          {
+            "name": "Delivered"
+          },
+          {
+            "name": "Transferred"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SupplyChainEvent",
+      "docs": [
+        "Supply chain event data"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "product",
+            "type": "pubkey"
+          },
+          {
+            "name": "event_type",
+            "type": {
+              "defined": {
+                "name": "EventType"
+              }
+            }
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "event_index",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

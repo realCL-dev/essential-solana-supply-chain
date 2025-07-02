@@ -1,18 +1,22 @@
 [toolchain]
-package_manager = "yarn"
+anchor_version = "0.31.1"
+solana_version = "2.2.18"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.localnet]
-supply_chain = "JAVuBXeBZqXNtS73azhBDAoYaaAFfo4gWXoZe2e7Jf8H"
+supply_chain = "6saUBRn5SYZfoejFLjjm6wEULiQr3kbopVUdzttVmJmE"
+
+[programs.devnet]
+supply_chain = "6saUBRn5SYZfoejFLjjm6wEULiQr3kbopVUdzttVmJmE"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

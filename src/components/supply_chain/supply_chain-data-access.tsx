@@ -1,26 +1,28 @@
-import {
-  SupplyChainAccount,
-  getCloseInstruction,
-  getSupplyChainProgramAccounts,
-  getSupplyChainProgramId,
-  getDecrementInstruction,
-  getIncrementInstruction,
-  getInitializeInstruction,
-  getSetInstruction,
-} from '@project/anchor'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { generateKeyPairSigner } from 'gill'
 import { useWalletUi } from '@wallet-ui/react'
 import { useWalletTransactionSignAndSend } from '../solana/use-wallet-transaction-sign-and-send'
 import { useClusterVersion } from '@/components/cluster/use-cluster-version'
 import { toastTx } from '@/components/toast-tx'
 import { useWalletUiSigner } from '@/components/solana/use-wallet-ui-signer'
+import { 
+  getInitializeProductInstructionAsync,
+  getLogEventInstruction,
+  getTransferOwnershipInstruction,
+  fetchProduct,
+  fetchAllProduct,
+  fetchSupplyChainEvent,
+  SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
+  EventType,
+  ProductStatus,
+  PRODUCT_DISCRIMINATOR
+} from '@project/anchor'
+import type { Address } from 'gill'
+import { getProgramDerivedAddress, getBytesEncoder, getAddressEncoder, getU64Encoder } from 'gill'
 
 export function useSupplyChainProgramId() {
-  const { cluster } = useWalletUi()
-  return useMemo(() => getSupplyChainProgramId(cluster.id), [cluster])
+  return SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS
 }
 
 export function useSupplyChainProgram() {
@@ -35,108 +37,292 @@ export function useSupplyChainProgram() {
   })
 }
 
-export function useSupplyChainInitializeMutation() {
+// Product-related hooks
+export function useInitializeProductMutation() {
   const { cluster } = useWalletUi()
   const queryClient = useQueryClient()
   const signer = useWalletUiSigner()
   const signAndSend = useWalletTransactionSignAndSend()
 
   return useMutation({
-    mutationFn: async () => {
-      const supply_chain = await generateKeyPairSigner()
-      return await signAndSend(getInitializeInstruction({ payer: signer, supply_chain }), signer)
+    mutationFn: async ({ serialNumber, description }: { serialNumber: string; description: string }) => {
+      const instruction = await getInitializeProductInstructionAsync({
+        owner: signer,
+        serialNumber,
+        description,
+      })
+      return await signAndSend(instruction, signer)
     },
     onSuccess: async (tx) => {
       toastTx(tx)
-      await queryClient.invalidateQueries({ queryKey: ['supply_chain', 'accounts', { cluster }] })
+      await queryClient.invalidateQueries({ queryKey: ['supply_chain', 'products', { cluster }] })
     },
-    onError: () => toast.error('Failed to run program'),
+    onError: () => toast.error('Failed to initialize product'),
   })
 }
 
-export function useSupplyChainDecrementMutation({ supply_chain }: { supply_chain: SupplyChainAccount }) {
-  const invalidateAccounts = useSupplyChainAccountsInvalidate()
+export function useLogEventMutation() {
+  const invalidateAccounts = useProductAccountsInvalidate()
+  const queryClient = useQueryClient()
   const signer = useWalletUiSigner()
   const signAndSend = useWalletTransactionSignAndSend()
+  const { client } = useWalletUi()
+  const programId = useSupplyChainProgramId()
 
   return useMutation({
-    mutationFn: async () => await signAndSend(getDecrementInstruction({ supply_chain: supply_chain.address }), signer),
-    onSuccess: async (tx) => {
-      toastTx(tx)
-      await invalidateAccounts()
-    },
-  })
-}
+    mutationFn: async ({ 
+      productAddress, 
+      eventType, 
+      description 
+    }: { 
+      productAddress: Address; 
+      eventType: EventType; 
+      description: string 
+    }) => {
+      // First, fetch the product account to get the events counter
+      const productAccount = await fetchProduct(client.rpc, productAddress)
+      
+      // Derive the event PDA using the same seeds as the backend:
+      // [b"event", product_account.key().as_ref(), product_account.events_counter.to_le_bytes().as_ref()]
+      const [eventAccountPDA] = await getProgramDerivedAddress({
+        programAddress: programId,
+        seeds: [
+          getBytesEncoder().encode(new Uint8Array([101, 118, 101, 110, 116])), // "event"
+          getAddressEncoder().encode(productAddress),
+          getU64Encoder().encode(productAccount.data.eventsCounter), // events_counter as u64 little-endian
+        ],
+      })
 
-export function useSupplyChainIncrementMutation({ supply_chain }: { supply_chain: SupplyChainAccount }) {
-  const invalidateAccounts = useSupplyChainAccountsInvalidate()
-  const signAndSend = useWalletTransactionSignAndSend()
-  const signer = useWalletUiSigner()
-
-  return useMutation({
-    mutationFn: async () => await signAndSend(getIncrementInstruction({ supply_chain: supply_chain.address }), signer),
-    onSuccess: async (tx) => {
-      toastTx(tx)
-      await invalidateAccounts()
-    },
-  })
-}
-
-export function useSupplyChainSetMutation({ supply_chain }: { supply_chain: SupplyChainAccount }) {
-  const invalidateAccounts = useSupplyChainAccountsInvalidate()
-  const signAndSend = useWalletTransactionSignAndSend()
-  const signer = useWalletUiSigner()
-
-  return useMutation({
-    mutationFn: async (value: number) =>
-      await signAndSend(
-        getSetInstruction({
-          supply_chain: supply_chain.address,
-          value,
-        }),
+      const instruction = getLogEventInstruction({
+        productAccount: productAddress,
+        eventAccount: eventAccountPDA,
         signer,
-      ),
-    onSuccess: async (tx) => {
-      toastTx(tx)
-      await invalidateAccounts()
+        eventType,
+        description,
+      })
+      
+      return { tx: await signAndSend(instruction, signer), productAddress }
     },
+    onSuccess: async ({ tx, productAddress }) => {
+      toastTx(tx)
+      
+      // Wait a bit for the transaction to be fully processed on-chain
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Invalidate both product accounts and events for this specific product
+      await Promise.all([
+        invalidateAccounts(),
+        queryClient.invalidateQueries({ queryKey: ['supply_chain', 'events', productAddress] }),
+        queryClient.invalidateQueries({ queryKey: ['supply_chain', 'product', productAddress] })
+      ])
+    },
+    onError: () => toast.error('Failed to log event'),
   })
 }
 
-export function useSupplyChainCloseMutation({ supply_chain }: { supply_chain: SupplyChainAccount }) {
-  const invalidateAccounts = useSupplyChainAccountsInvalidate()
+export function useTransferOwnershipMutation() {
+  const invalidateAccounts = useProductAccountsInvalidate()
   const signAndSend = useWalletTransactionSignAndSend()
   const signer = useWalletUiSigner()
 
   return useMutation({
-    mutationFn: async () => {
-      return await signAndSend(getCloseInstruction({ payer: signer, supply_chain: supply_chain.address }), signer)
+    mutationFn: async ({ 
+      productAddress, 
+      newOwner 
+    }: { 
+      productAddress: Address; 
+      newOwner: Address 
+    }) => {
+      const instruction = getTransferOwnershipInstruction({
+        productAccount: productAddress,
+        currentOwner: signer,
+        newOwner,
+      })
+      return await signAndSend(instruction, signer)
     },
     onSuccess: async (tx) => {
       toastTx(tx)
       await invalidateAccounts()
     },
+    onError: () => toast.error('Failed to transfer ownership'),
   })
 }
 
-export function useSupplyChainAccountsQuery() {
+// Query hooks for products
+export function useProductAccountsQuery() {
+  const { client } = useWalletUi()
+  const programId = useSupplyChainProgramId()
+
+  return useQuery({
+    queryKey: useProductAccountsQueryKey(),
+    queryFn: async () => {
+      try {
+        // Get all accounts owned by the program
+        const programAccounts = await client.rpc.getProgramAccounts(programId, {
+          encoding: 'base64'
+        }).send()
+        
+        if (!programAccounts || programAccounts.length === 0) {
+          return []
+        }
+
+        // Filter for Product accounts only (check discriminator)
+        const productAddresses = programAccounts
+          .filter(account => {
+            // Check if account data starts with Product discriminator
+            const data = account.account.data
+            if (!data) return false
+            
+            // Handle base64 encoded data response
+            let dataBytes: Uint8Array
+            if (Array.isArray(data) && data.length === 2 && data[1] === 'base64') {
+              // data is [base64String, 'base64']
+              try {
+                dataBytes = new Uint8Array(Buffer.from(data[0] as string, 'base64'))
+              } catch {
+                return false
+              }
+            } else if (typeof data === 'string') {
+              // Direct base64 string
+              try {
+                dataBytes = new Uint8Array(Buffer.from(data, 'base64'))
+              } catch {
+                return false
+              }
+            } else if (data instanceof Uint8Array) {
+              dataBytes = data
+            } else if (Array.isArray(data)) {
+              dataBytes = new Uint8Array(data)
+            } else {
+              return false
+            }
+            
+            if (dataBytes.length < 8) return false
+            
+            // Compare first 8 bytes with Product discriminator
+            return dataBytes.slice(0, 8).every((byte, i) => byte === PRODUCT_DISCRIMINATOR[i])
+          })
+          .map(account => account.pubkey)
+
+        if (productAddresses.length === 0) {
+          return []
+        }
+
+        return await fetchAllProduct(client.rpc, productAddresses)
+      } catch (error) {
+        console.error('Error fetching product accounts:', error)
+        return []
+      }
+    },
+  })
+}
+
+export function useProductQuery(address: Address) {
   const { client } = useWalletUi()
 
   return useQuery({
-    queryKey: useSupplyChainAccountsQueryKey(),
-    queryFn: async () => await getSupplyChainProgramAccounts(client.rpc),
+    queryKey: ['supply_chain', 'product', address],
+    queryFn: async () => await fetchProduct(client.rpc, address),
+    enabled: !!address,
   })
 }
 
-function useSupplyChainAccountsInvalidate() {
+// Events query hook
+export function useProductEventsQuery(productAddress: Address) {
+  const { client } = useWalletUi()
+  const programId = useSupplyChainProgramId()
+
+  return useQuery({
+    queryKey: ['supply_chain', 'events', productAddress],
+    queryFn: async () => {
+      try {
+        // First get the product to know how many events exist
+        const product = await fetchProduct(client.rpc, productAddress)
+        const eventsCount = Number(product.data.eventsCounter)
+        
+        if (eventsCount === 0) {
+          return []
+        }
+
+        // Derive all event PDAs for this product
+        const eventPromises = []
+        for (let i = 0; i < eventsCount; i++) {
+          const [eventPDA] = await getProgramDerivedAddress({
+            programAddress: programId,
+            seeds: [
+              getBytesEncoder().encode(new Uint8Array([101, 118, 101, 110, 116])), // "event"
+              getAddressEncoder().encode(productAddress),
+              getU64Encoder().encode(BigInt(i)), // event index as u64
+            ],
+          })
+          eventPromises.push(fetchSupplyChainEvent(client.rpc, eventPDA))
+        }
+
+        // Fetch all events in parallel
+        const events = await Promise.all(eventPromises)
+        
+        // Sort by event index (timestamp)
+        return events.sort((a, b) => Number(a.data.eventIndex) - Number(b.data.eventIndex))
+      } catch (error) {
+        console.error('Error fetching events:', error)
+        return []
+      }
+    },
+    enabled: !!productAddress,
+  })
+}
+
+// Utility hooks
+function useProductAccountsInvalidate() {
   const queryClient = useQueryClient()
-  const queryKey = useSupplyChainAccountsQueryKey()
+  const queryKey = useProductAccountsQueryKey()
 
   return () => queryClient.invalidateQueries({ queryKey })
 }
 
-function useSupplyChainAccountsQueryKey() {
+function useProductAccountsQueryKey() {
   const { cluster } = useWalletUi()
-
-  return ['supply_chain', 'accounts', { cluster }]
+  return ['supply_chain', 'products', { cluster }]
 }
+
+// Form state hooks
+export function useCreateProductForm() {
+  const [serialNumber, setSerialNumber] = useState('')
+  const [description, setDescription] = useState('')
+
+  const reset = () => {
+    setSerialNumber('')
+    setDescription('')
+  }
+
+  return {
+    serialNumber,
+    setSerialNumber,
+    description,
+    setDescription,
+    reset,
+    isValid: serialNumber.trim().length > 0 && description.trim().length > 0
+  }
+}
+
+export function useLogEventForm() {
+  const [eventType, setEventType] = useState<EventType>(EventType.Created)
+  const [description, setDescription] = useState('')
+
+  const reset = () => {
+    setEventType(EventType.Created)
+    setDescription('')
+  }
+
+  return {
+    eventType,
+    setEventType,
+    description,
+    setDescription,
+    reset,
+    isValid: description.trim().length > 0
+  }
+}
+
+// Export types for convenience
+export { EventType, ProductStatus }

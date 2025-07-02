@@ -1,5 +1,10 @@
 import { WalletButton } from '../solana/solana-provider'
-import { SupplyChainButtonInitialize, SupplyChainList, SupplyChainProgramExplorerLink, SupplyChainProgramGuard } from './supply_chain-ui'
+import { 
+  CreateProductForm, 
+  ProductList, 
+  SupplyChainProgramExplorerLink, 
+  SupplyChainProgramGuard 
+} from './supply_chain-ui'
 import { AppHero } from '../app-hero'
 import { useWalletUi } from '@wallet-ui/react'
 
@@ -9,25 +14,39 @@ export default function SupplyChainFeature() {
   return (
     <SupplyChainProgramGuard>
       <AppHero
-        title="SupplyChain"
+        title="Supply Chain Tracker"
         subtitle={
           account
-            ? "Initialize a new supply_chain onchain by clicking the button. Use the program's methods (increment, decrement, set, and close) to change the state of the account."
-            : 'Select a wallet to run the program.'
+            ? "Create products, log events, and track ownership through the supply chain. Each product is represented as an on-chain account with immutable event history."
+            : 'Connect your wallet to start tracking products in the supply chain.'
         }
       >
         <p className="mb-6">
           <SupplyChainProgramExplorerLink />
         </p>
-        {account ? (
-          <SupplyChainButtonInitialize />
-        ) : (
+        {!account && (
           <div style={{ display: 'inline-block' }}>
             <WalletButton />
           </div>
         )}
       </AppHero>
-      {account ? <SupplyChainList /> : null}
+
+      {account && (
+        <div className="space-y-8">
+          {/* Create Product Section */}
+          <div className="max-w-2xl mx-auto">
+            <CreateProductForm />
+          </div>
+
+          {/* Products List Section */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-6 text-center">
+              Supply Chain Products
+            </h2>
+            <ProductList />
+          </div>
+        </div>
+      )}
     </SupplyChainProgramGuard>
   )
 }
