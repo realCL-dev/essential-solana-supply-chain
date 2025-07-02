@@ -508,6 +508,9 @@ export function QRScanner() {
       setError('')
       setIsScanning(true)
       
+      // Wait for DOM to update before looking for container
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       // Get the container first to ensure it exists
       const placeholder = document.getElementById('qr-scanner-video')
       if (!placeholder || !placeholder.parentNode) {
