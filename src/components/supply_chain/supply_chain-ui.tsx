@@ -520,10 +520,11 @@ export function QRScanner() {
       const qrScanner = new QrScanner(
         videoRef.current,
         (result) => {
-          console.log('QR Code detected:', result)
+          const data = typeof result === 'string' ? result : result.data
+          console.log('QR Code detected:', data)
           // Parse the scanned result to extract product address
           try {
-            const url = new URL(result)
+            const url = new URL(data)
             const productAddress = url.searchParams.get('scan')
             if (productAddress) {
               setScannedProductAddress(productAddress as Address)
@@ -534,8 +535,8 @@ export function QRScanner() {
             }
           } catch {
             // If it's not a URL, treat it as a direct product address
-            if (result.length === 44) { // Typical blockchain address length
-              setScannedProductAddress(result as Address)
+            if (data.length === 44) { // Typical blockchain address length
+              setScannedProductAddress(data as Address)
               // Use setTimeout to avoid blocking the callback
               setTimeout(() => stopScanning(), 100)
             } else {
@@ -558,7 +559,7 @@ export function QRScanner() {
         if (canvas) {
           const ctx = canvas.getContext('2d')
           if (ctx && 'willReadFrequently' in ctx) {
-            (ctx as any).willReadFrequently = true
+            (ctx as CanvasRenderingContext2D & { willReadFrequently?: boolean }).willReadFrequently = true
           }
         }
       }, 500)
