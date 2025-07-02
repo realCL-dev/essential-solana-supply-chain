@@ -500,106 +500,82 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
 export function QRScanner() {
   const [isScanning, setIsScanning] = useState(false)
   const [scannedProductAddress, setScannedProductAddress] = useState<Address | null>(null)
-  const [scanner, setScanner] = useState<QrScanner | null>(null)
   const [error, setError] = useState<string>('')
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  const startScanning = async () => {
-    try {
-      setError('')
-      setIsScanning(true)
-      
-      // Wait for React to render the video element
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      if (!videoRef.current) {
-        throw new Error('Video element not found')
-      }
-      
-      // Create QR scanner with proper API usage
-      const qrScanner = new QrScanner(
-        videoRef.current,
-        (result: string) => {
+  const stopScanning = useCallback(() => {
+    setIsScanning(false)
+  }, [])
+
+  useEffect(() => {
+    if (!isScanning) {
+      return
+    }
+
+    let qrScanner: QrScanner | null = null
+
+    const videoEl = videoRef.current
+    if (videoEl) {
+      qrScanner = new QrScanner(
+        videoEl,
+        (result: string | QrScanner.ScanResult) => {
           console.log('QR Code detected:', result)
-          // Parse the scanned result to extract product address
+          const resultData = typeof result === 'string' ? result : result.data
           try {
-            const url = new URL(result)
+            const url = new URL(resultData)
             const productAddress = url.searchParams.get('scan')
             if (productAddress) {
               setScannedProductAddress(productAddress as Address)
-              // Use setTimeout to avoid blocking the callback
-              setTimeout(() => stopScanning(), 100)
+              stopScanning()
             } else {
               setError('Invalid QR code. Please scan a product QR code.')
             }
           } catch {
-            // If it's not a URL, treat it as a direct product address
-            if (result.length === 44) { // Typical blockchain address length
-              setScannedProductAddress(result as Address)
-              // Use setTimeout to avoid blocking the callback
-              setTimeout(() => stopScanning(), 100)
+            if (resultData.length >= 32 && resultData.length <= 44) {
+              setScannedProductAddress(resultData as Address)
+              stopScanning()
             } else {
               setError('Invalid QR code format.')
             }
           }
-        }
+        },
+        {
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        } as QrScanner.Options
       )
-      
-      // Set scanner options
-      qrScanner.setCamera('environment')
-      qrScanner.setInversionMode('both')
 
-
-      await qrScanner.start()
-      setScanner(qrScanner)
-    } catch (err) {
-      console.error('Camera error:', err)
-      
-      // Provide specific error messages for common mobile issues
-      let errorMessage = 'Camera error: '
-      if (err instanceof Error) {
-        if (err.name === 'NotAllowedError') {
-          errorMessage += 'Camera permission denied. Please allow camera access and try again.'
-        } else if (err.name === 'NotFoundError') {
-          errorMessage += 'No camera found. Please ensure your device has a camera.'
-        } else if (err.name === 'NotSupportedError') {
-          errorMessage += 'Camera not supported. Please use HTTPS or try a different browser.'
-        } else if (err.name === 'NotReadableError') {
-          errorMessage += 'Camera is being used by another application.'
+      qrScanner.start().catch((err) => {
+        console.error('Camera error:', err)
+        let errorMessage = 'Camera error: '
+        if (err instanceof Error) {
+          if (err.name === 'NotAllowedError') {
+            errorMessage += 'Camera permission denied. Please allow camera access and try again.'
+          } else if (err.name === 'NotFoundError') {
+            errorMessage += 'No camera found. Please ensure your device has a camera.'
+          } else if (err.name === 'NotSupportedError') {
+            errorMessage += 'Camera not supported. Please use HTTPS or try a different browser.'
+          } else if (err.name === 'NotReadableError') {
+            errorMessage += 'Camera is being used by another application.'
+          } else {
+            errorMessage += err.message
+          }
         } else {
-          errorMessage += err.message
+          errorMessage += 'Unknown error occurred. Please try again.'
         }
-      } else {
-        errorMessage += 'Unknown error occurred. Please try again.'
-      }
-      
-      setError(errorMessage)
-      setIsScanning(false)
+        setError(errorMessage)
+        stopScanning()
+      })
     }
-  }
 
-  const stopScanning = useCallback(async () => {
-    if (scanner) {
-      try {
-        scanner.stop()
-        scanner.destroy()
-      } catch (error) {
-        console.error('Error stopping scanner:', error)
-      }
-      setScanner(null)
-    }
-    setIsScanning(false)
-  }, [scanner])
-
-  useEffect(() => {
     return () => {
-      stopScanning()
+      qrScanner?.destroy()
     }
-  }, [stopScanning])
+  }, [isScanning, stopScanning])
 
   if (scannedProductAddress) {
     return (
-      <MobileScanEventForm 
+      <MobileScanEventForm
         productAddress={scannedProductAddress}
         onClose={() => setScannedProductAddress(null)}
       />
@@ -609,14 +585,15 @@ export function QRScanner() {
   return (
     <div className="border rounded-lg p-4 bg-white">
       <h3 className="text-lg font-semibold mb-4 text-center">QR Code Scanner</h3>
-      
+
       {!isScanning ? (
         <div className="text-center space-y-4">
           <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg">
-            <p className="text-gray-600 mb-4">
-              Scan a product QR code to log events
-            </p>
-            <Button onClick={startScanning} className="w-full">
+            <p className="text-gray-600 mb-4">Scan a product QR code to log events</p>
+            <Button onClick={() => {
+              setError('')
+              setIsScanning(true)
+            }} className="w-full">
               Start Camera
             </Button>
           </div>
@@ -631,19 +608,16 @@ export function QRScanner() {
               muted
               playsInline
             />
+            <div className="absolute top-0 left-0 w-full h-full" style={{ boxShadow: 'inset 0 0 0 5px rgba(255, 255, 255, 0.5)' }}></div>
           </div>
-          
+
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
-          
-          <Button 
-            onClick={stopScanning} 
-            variant="outline" 
-            className="w-full"
-          >
+
+          <Button onClick={stopScanning} variant="outline" className="w-full">
             Stop Scanning
           </Button>
         </div>
