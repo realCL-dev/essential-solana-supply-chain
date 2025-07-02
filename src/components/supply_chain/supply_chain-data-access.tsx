@@ -191,8 +191,8 @@ export function useProductAccountsQuery() {
               }
             } else if (data instanceof Uint8Array) {
               dataBytes = data
-            } else if (Array.isArray(data)) {
-              dataBytes = new Uint8Array(data)
+            } else if (Array.isArray(data) && data.every(item => typeof item === 'number')) {
+              dataBytes = new Uint8Array(data as number[])
             } else {
               return false
             }
