@@ -513,7 +513,7 @@ export function QRScanner() {
       video.style.height = '300px'
       video.style.objectFit = 'cover'
       
-      // Create QR scanner
+      // Create QR scanner with mobile-optimized settings
       const qrScanner = new QrScanner(
         video,
         (result) => {
@@ -540,10 +540,14 @@ export function QRScanner() {
         {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
+          preferredCamera: 'environment', // Use back camera on mobile
+          maxScansPerSecond: 5,
         }
       )
 
+      console.log('Attempting to start camera...')
       await qrScanner.start()
+      console.log('Camera started successfully')
       setScanner(qrScanner)
       
       // Replace the placeholder div with the video element
@@ -553,7 +557,26 @@ export function QRScanner() {
       }
     } catch (err) {
       console.error('Camera error:', err)
-      setError(`Camera error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      
+      // Provide specific error messages for common mobile issues
+      let errorMessage = 'Camera error: '
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          errorMessage += 'Camera permission denied. Please allow camera access and try again.'
+        } else if (err.name === 'NotFoundError') {
+          errorMessage += 'No camera found. Please ensure your device has a camera.'
+        } else if (err.name === 'NotSupportedError') {
+          errorMessage += 'Camera not supported. Please use HTTPS or try a different browser.'
+        } else if (err.name === 'NotReadableError') {
+          errorMessage += 'Camera is being used by another application.'
+        } else {
+          errorMessage += err.message
+        }
+      } else {
+        errorMessage += 'Unknown error occurred. Please try again.'
+      }
+      
+      setError(errorMessage)
       setIsScanning(false)
     }
   }
