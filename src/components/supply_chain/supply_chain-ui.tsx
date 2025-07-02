@@ -518,9 +518,9 @@ export function QRScanner() {
     if (videoEl) {
       qrScanner = new QrScanner(
         videoEl,
-        (result: string | QrScanner.ScanResult) => {
+        (result: string) => {
           console.log('QR Code detected:', result)
-          const resultData = typeof result === 'string' ? result : result.data
+          const resultData = result
           try {
             const url = new URL(resultData)
             const productAddress = url.searchParams.get('scan')
@@ -542,7 +542,7 @@ export function QRScanner() {
         {
           highlightScanRegion: true,
           highlightCodeOutline: true,
-        } as QrScanner.Options
+        }
       )
 
       qrScanner.start().catch((err) => {
