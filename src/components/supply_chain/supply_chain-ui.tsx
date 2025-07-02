@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ExplorerLink } from '../cluster/cluster-ui'
-import { ReactNode, useState, useEffect } from 'react'
+import { ReactNode, useState, useEffect, useCallback } from 'react'
 import type { Account, Address } from 'gill'
 import QRCode from 'qrcode'
 import QrScanner from 'qr-scanner'
@@ -508,11 +508,24 @@ export function QRScanner() {
       setError('')
       setIsScanning(true)
       
-      // Create video element
+      // Get the container first to ensure it exists
+      const placeholder = document.getElementById('qr-scanner-video')
+      if (!placeholder || !placeholder.parentNode) {
+        throw new Error('Scanner container not found')
+      }
+
+      // Create video element with proper mobile attributes
       const video = document.createElement('video')
       video.style.width = '100%'
       video.style.height = '300px'
       video.style.objectFit = 'cover'
+      video.style.borderRadius = '8px'
+      video.setAttribute('playsinline', 'true')
+      video.setAttribute('autoplay', 'true')
+      video.setAttribute('muted', 'true')
+      
+      // Replace placeholder immediately to avoid timing issues
+      placeholder.parentNode.replaceChild(video, placeholder)
       
       // Create QR scanner with mobile-optimized settings
       const qrScanner = new QrScanner(
@@ -530,7 +543,7 @@ export function QRScanner() {
             }
           } catch {
             // If it's not a URL, treat it as a direct product address
-            if (result.data.length === 44) { // Typical Solana address length
+            if (result.data.length === 44) { // Typical blockchain address length
               setScannedProductAddress(result.data as Address)
               stopScanning()
             } else {
@@ -550,12 +563,6 @@ export function QRScanner() {
       await qrScanner.start()
       console.log('Camera started successfully')
       setScanner(qrScanner)
-      
-      // Replace the placeholder div with the video element
-      const placeholder = document.getElementById('qr-scanner-video')
-      if (placeholder && placeholder.parentNode) {
-        placeholder.parentNode.replaceChild(video, placeholder)
-      }
     } catch (err) {
       console.error('Camera error:', err)
       
@@ -582,20 +589,34 @@ export function QRScanner() {
     }
   }
 
-  const stopScanning = () => {
+  const stopScanning = useCallback(() => {
     if (scanner) {
-      scanner.stop()
-      scanner.destroy()
+      try {
+        scanner.stop()
+        scanner.destroy()
+      } catch (error) {
+        console.error('Error stopping scanner:', error)
+      }
       setScanner(null)
     }
     setIsScanning(false)
-  }
+    
+    // Restore the placeholder div
+    const videoElement = document.querySelector('#qr-scanner-video, video[style*="300px"]')
+    if (videoElement && videoElement.parentNode) {
+      const placeholder = document.createElement('div')
+      placeholder.id = 'qr-scanner-video'
+      placeholder.className = 'w-full h-[300px] bg-gray-200 rounded-lg flex items-center justify-center'
+      placeholder.innerHTML = '<p class="text-gray-500">Starting camera...</p>'
+      videoElement.parentNode.replaceChild(placeholder, videoElement)
+    }
+  }, [scanner])
 
   useEffect(() => {
     return () => {
       stopScanning()
     }
-  }, [])
+  }, [stopScanning])
 
   if (scannedProductAddress) {
     return (
