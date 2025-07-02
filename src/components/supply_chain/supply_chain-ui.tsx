@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ExplorerLink } from '../cluster/cluster-ui'
-import { ReactNode, useState, useEffect, useCallback } from 'react'
+import { ReactNode, useState, useEffect, useCallback, useRef } from 'react'
 import type { Account, Address } from 'gill'
 import QRCode from 'qrcode'
 import QrScanner from 'qr-scanner'
@@ -502,37 +502,23 @@ export function QRScanner() {
   const [scannedProductAddress, setScannedProductAddress] = useState<Address | null>(null)
   const [scanner, setScanner] = useState<QrScanner | null>(null)
   const [error, setError] = useState<string>('')
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const startScanning = async () => {
     try {
       setError('')
       setIsScanning(true)
       
-      // Wait for DOM to update before looking for container
+      // Wait for React to render the video element
       await new Promise(resolve => setTimeout(resolve, 100))
       
-      // Get the container first to ensure it exists
-      const placeholder = document.getElementById('qr-scanner-video')
-      if (!placeholder || !placeholder.parentNode) {
-        throw new Error('Scanner container not found')
+      if (!videoRef.current) {
+        throw new Error('Video element not found')
       }
-
-      // Create video element with proper mobile attributes
-      const video = document.createElement('video')
-      video.style.width = '100%'
-      video.style.height = '300px'
-      video.style.objectFit = 'cover'
-      video.style.borderRadius = '8px'
-      video.setAttribute('playsinline', 'true')
-      video.setAttribute('autoplay', 'true')
-      video.setAttribute('muted', 'true')
-      
-      // Replace placeholder immediately to avoid timing issues
-      placeholder.parentNode.replaceChild(video, placeholder)
       
       // Create QR scanner with mobile-optimized settings
       const qrScanner = new QrScanner(
-        video,
+        videoRef.current,
         (result) => {
           // Parse the scanned result to extract product address
           try {
@@ -638,12 +624,13 @@ export function QRScanner() {
       ) : (
         <div className="space-y-4">
           <div className="relative">
-            <div 
-              id="qr-scanner-video" 
-              className="w-full h-[300px] bg-gray-200 rounded-lg flex items-center justify-center"
-            >
-              <p className="text-gray-500">Starting camera...</p>
-            </div>
+            <video
+              ref={videoRef}
+              className="w-full h-[300px] bg-gray-200 rounded-lg object-cover"
+              autoPlay
+              muted
+              playsInline
+            />
           </div>
           
           {error && (
