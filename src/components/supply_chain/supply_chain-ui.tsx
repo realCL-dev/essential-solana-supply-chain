@@ -516,15 +516,14 @@ export function QRScanner() {
         throw new Error('Video element not found')
       }
       
-      // Create QR scanner with mobile-optimized settings
+      // Create QR scanner with proper API usage
       const qrScanner = new QrScanner(
         videoRef.current,
-        (result) => {
-          const data = typeof result === 'string' ? result : result.data
-          console.log('QR Code detected:', data)
+        (result: string) => {
+          console.log('QR Code detected:', result)
           // Parse the scanned result to extract product address
           try {
-            const url = new URL(data)
+            const url = new URL(result)
             const productAddress = url.searchParams.get('scan')
             if (productAddress) {
               setScannedProductAddress(productAddress as Address)
@@ -535,34 +534,21 @@ export function QRScanner() {
             }
           } catch {
             // If it's not a URL, treat it as a direct product address
-            if (data.length === 44) { // Typical blockchain address length
-              setScannedProductAddress(data as Address)
+            if (result.length === 44) { // Typical blockchain address length
+              setScannedProductAddress(result as Address)
               // Use setTimeout to avoid blocking the callback
               setTimeout(() => stopScanning(), 100)
             } else {
               setError('Invalid QR code format.')
             }
           }
-        },
-        {
-          returnDetailedScanResult: true,
-          highlightScanRegion: true,
-          preferredCamera: 'environment',
-          maxScansPerSecond: 3,
-          calculationInterval: 200,
         }
       )
+      
+      // Set scanner options
+      qrScanner.setCamera('environment')
+      qrScanner.setInversionMode('both')
 
-      // Add canvas optimization after scanner starts
-      setTimeout(() => {
-        const canvas = videoRef.current?.parentElement?.querySelector('canvas')
-        if (canvas) {
-          const ctx = canvas.getContext('2d')
-          if (ctx && 'willReadFrequently' in ctx) {
-            (ctx as CanvasRenderingContext2D & { willReadFrequently?: boolean }).willReadFrequently = true
-          }
-        }
-      }, 500)
 
       await qrScanner.start()
       setScanner(qrScanner)
