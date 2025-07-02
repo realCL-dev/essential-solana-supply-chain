@@ -432,8 +432,9 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
         // Create a URL that includes the product address for scanning
         const qrData = `${window.location.origin}/supply_chain?scan=${productAddress}`
         const dataURL = await QRCode.toDataURL(qrData, {
-          width: 200,
-          margin: 2,
+          width: 300,
+          margin: 4,
+          errorCorrectionLevel: 'H',
           color: {
             dark: '#000000',
             light: '#FFFFFF'
