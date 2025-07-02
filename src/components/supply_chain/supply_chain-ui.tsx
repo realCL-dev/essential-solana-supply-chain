@@ -510,7 +510,7 @@ export function QRScanner() {
       setIsScanning(true)
       
       // Wait for React to render the video element
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise(resolve => setTimeout(resolve, 200))
       
       if (!videoRef.current) {
         throw new Error('Video element not found')
@@ -520,6 +520,7 @@ export function QRScanner() {
       const qrScanner = new QrScanner(
         videoRef.current,
         (result) => {
+          console.log('QR Code detected:', result.data)
           // Parse the scanned result to extract product address
           try {
             const url = new URL(result.data)
@@ -543,14 +544,12 @@ export function QRScanner() {
         {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
-          preferredCamera: 'environment', // Use back camera on mobile
+          preferredCamera: 'environment',
           maxScansPerSecond: 5,
         }
       )
 
-      console.log('Attempting to start camera...')
       await qrScanner.start()
-      console.log('Camera started successfully')
       setScanner(qrScanner)
     } catch (err) {
       console.error('Camera error:', err)
@@ -626,7 +625,7 @@ export function QRScanner() {
           <div className="relative">
             <video
               ref={videoRef}
-              className="w-full h-[300px] bg-gray-200 rounded-lg object-cover"
+              className="w-full h-[300px] bg-black rounded-lg object-cover"
               autoPlay
               muted
               playsInline
