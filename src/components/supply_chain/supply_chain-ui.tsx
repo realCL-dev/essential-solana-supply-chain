@@ -20,6 +20,8 @@ import { Label } from '@/components/ui/label'
 import { ExplorerLink } from '../cluster/cluster-ui'
 import { ReactNode, useState, useEffect } from 'react'
 import type { Account, Address } from 'gill'
+import QRCode from 'qrcode'
+import QrScanner from 'qr-scanner'
 
 // Type for Product account data structure
 type ProductData = {
@@ -91,6 +93,7 @@ function ProductCard({ product }: { product: ProductAccount }) {
   const [showEventForm, setShowEventForm] = useState(false)
   const [showTransferForm, setShowTransferForm] = useState(false)
   const [showEvents, setShowEvents] = useState(false)
+  const [showQRCode, setShowQRCode] = useState(false)
   
   // Query for the latest product data to ensure real-time updates
   const productQuery = useProductQuery(product.address as Address)
@@ -135,6 +138,18 @@ function ProductCard({ product }: { product: ProductAccount }) {
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
+          <Button 
+            onClick={() => setShowQRCode(!showQRCode)} 
+            variant="outline" 
+            className="w-full"
+          >
+            {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
+          </Button>
+          
+          {showQRCode && (
+            <ProductQRCode productAddress={product.address as Address} />
+          )}
+          
           <Button 
             onClick={() => setShowEvents(!showEvents)} 
             variant="outline" 
@@ -402,6 +417,310 @@ function EventsList({ productAddress }: { productAddress: Address }) {
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+function ProductQRCode({ productAddress }: { productAddress: Address }) {
+  const [qrCodeDataURL, setQrCodeDataURL] = useState<string>('')
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  useEffect(() => {
+    const generateQRCode = async () => {
+      setIsGenerating(true)
+      try {
+        // Create a URL that includes the product address for scanning
+        const qrData = `${window.location.origin}/supply_chain?scan=${productAddress}`
+        const dataURL = await QRCode.toDataURL(qrData, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        })
+        setQrCodeDataURL(dataURL)
+      } catch (error) {
+        console.error('Error generating QR code:', error)
+      } finally {
+        setIsGenerating(false)
+      }
+    }
+
+    generateQRCode()
+  }, [productAddress])
+
+  if (isGenerating) {
+    return (
+      <div className="p-4 border rounded text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+        <p className="text-sm text-gray-500 mt-2">Generating QR Code...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-4 border rounded text-center bg-white">
+      <h4 className="font-medium text-sm mb-3">Product QR Code</h4>
+      {qrCodeDataURL && (
+        <div className="space-y-3">
+          <img 
+            src={qrCodeDataURL} 
+            alt="Product QR Code" 
+            className="mx-auto border rounded"
+          />
+          <div className="space-y-1">
+            <p className="text-xs text-gray-600">
+              Scan to log events for this product
+            </p>
+            <p className="text-xs text-gray-500 font-mono break-all">
+              {productAddress}
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              const link = document.createElement('a')
+              link.download = `product-${productAddress.slice(0, 8)}-qr.png`
+              link.href = qrCodeDataURL
+              link.click()
+            }}
+            size="sm"
+            variant="outline"
+            className="w-full"
+          >
+            Download QR Code
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function QRScanner() {
+  const [isScanning, setIsScanning] = useState(false)
+  const [scannedProductAddress, setScannedProductAddress] = useState<Address | null>(null)
+  const [scanner, setScanner] = useState<QrScanner | null>(null)
+  const [error, setError] = useState<string>('')
+
+  const startScanning = async () => {
+    try {
+      setError('')
+      setIsScanning(true)
+      
+      // Create video element
+      const video = document.createElement('video')
+      video.style.width = '100%'
+      video.style.height = '300px'
+      video.style.objectFit = 'cover'
+      
+      // Create QR scanner
+      const qrScanner = new QrScanner(
+        video,
+        (result) => {
+          // Parse the scanned result to extract product address
+          try {
+            const url = new URL(result.data)
+            const productAddress = url.searchParams.get('scan')
+            if (productAddress) {
+              setScannedProductAddress(productAddress as Address)
+              stopScanning()
+            } else {
+              setError('Invalid QR code. Please scan a product QR code.')
+            }
+          } catch {
+            // If it's not a URL, treat it as a direct product address
+            if (result.data.length === 44) { // Typical Solana address length
+              setScannedProductAddress(result.data as Address)
+              stopScanning()
+            } else {
+              setError('Invalid QR code format.')
+            }
+          }
+        },
+        {
+          returnDetailedScanResult: true,
+          highlightScanRegion: true,
+        }
+      )
+
+      await qrScanner.start()
+      setScanner(qrScanner)
+      
+      // Replace the placeholder div with the video element
+      const placeholder = document.getElementById('qr-scanner-video')
+      if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.replaceChild(video, placeholder)
+      }
+    } catch (err) {
+      console.error('Camera error:', err)
+      setError(`Camera error: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setIsScanning(false)
+    }
+  }
+
+  const stopScanning = () => {
+    if (scanner) {
+      scanner.stop()
+      scanner.destroy()
+      setScanner(null)
+    }
+    setIsScanning(false)
+  }
+
+  useEffect(() => {
+    return () => {
+      stopScanning()
+    }
+  }, [])
+
+  if (scannedProductAddress) {
+    return (
+      <MobileScanEventForm 
+        productAddress={scannedProductAddress}
+        onClose={() => setScannedProductAddress(null)}
+      />
+    )
+  }
+
+  return (
+    <div className="border rounded-lg p-4 bg-white">
+      <h3 className="text-lg font-semibold mb-4 text-center">QR Code Scanner</h3>
+      
+      {!isScanning ? (
+        <div className="text-center space-y-4">
+          <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg">
+            <p className="text-gray-600 mb-4">
+              Scan a product QR code to log events
+            </p>
+            <Button onClick={startScanning} className="w-full">
+              Start Camera
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="relative">
+            <div 
+              id="qr-scanner-video" 
+              className="w-full h-[300px] bg-gray-200 rounded-lg flex items-center justify-center"
+            >
+              <p className="text-gray-500">Starting camera...</p>
+            </div>
+          </div>
+          
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+          
+          <Button 
+            onClick={stopScanning} 
+            variant="outline" 
+            className="w-full"
+          >
+            Stop Scanning
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MobileScanEventForm({ productAddress, onClose }: { 
+  productAddress: Address; 
+  onClose: () => void 
+}) {
+  const { eventType, setEventType, description, setDescription, reset, isValid } = useLogEventForm()
+  const logEventMutation = useLogEventMutation()
+  const productQuery = useProductQuery(productAddress)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!isValid) return
+
+    try {
+      await logEventMutation.mutateAsync({ productAddress, eventType, description })
+      reset()
+      onClose()
+    } catch (error) {
+      console.error('Error logging event:', error)
+    }
+  }
+
+  return (
+    <div className="border rounded-lg p-4 bg-white">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">Log Event</h3>
+        <Button
+          onClick={onClose}
+          variant="outline"
+          size="sm"
+        >
+          ✕
+        </Button>
+      </div>
+
+      {productQuery.data && (
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <div className="text-sm">
+            <div className="font-medium">Product #{productQuery.data.data.serialNumber}</div>
+            <div className="text-gray-600">{productQuery.data.data.description}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              Status: <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                productQuery.data.data.status === ProductStatus.Created ? 'bg-blue-100 text-blue-800' :
+                productQuery.data.data.status === ProductStatus.InTransit ? 'bg-yellow-100 text-yellow-800' :
+                productQuery.data.data.status === ProductStatus.Received ? 'bg-green-100 text-green-800' :
+                productQuery.data.data.status === ProductStatus.Delivered ? 'bg-green-100 text-green-800' :
+                productQuery.data.data.status === ProductStatus.Transferred ? 'bg-purple-100 text-purple-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {ProductStatus[productQuery.data.data.status]}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="mobileEventType">Event Type</Label>
+          <select
+            id="mobileEventType"
+            value={eventType}
+            onChange={(e) => setEventType(parseInt(e.target.value) as EventType)}
+            className="w-full p-3 border rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value={EventType.Created}>Created</option>
+            <option value={EventType.Shipped}>Shipped</option>
+            <option value={EventType.Received}>Received</option>
+            <option value={EventType.QualityCheck}>Quality Check</option>
+            <option value={EventType.Delivered}>Delivered</option>
+            <option value={EventType.Other}>Other</option>
+          </select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="mobileEventDescription">Description</Label>
+          <Input
+            id="mobileEventDescription"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Enter event description"
+            required
+            maxLength={200}
+            className="p-3 text-base"
+          />
+        </div>
+        
+        <Button 
+          type="submit" 
+          disabled={!isValid || logEventMutation.isPending}
+          className="w-full p-3 text-base"
+        >
+          {logEventMutation.isPending ? 'Logging Event...' : 'Log Event'}
+        </Button>
+      </form>
     </div>
   )
 }

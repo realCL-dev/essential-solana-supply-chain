@@ -3,7 +3,8 @@ import {
   CreateProductForm, 
   ProductList, 
   SupplyChainProgramExplorerLink, 
-  SupplyChainProgramGuard 
+  SupplyChainProgramGuard,
+  QRScanner
 } from './supply_chain-ui'
 import { AppHero } from '../app-hero'
 import { useWalletUi } from '@wallet-ui/react'
@@ -33,6 +34,11 @@ export default function SupplyChainFeature() {
 
       {account && (
         <div className="space-y-8">
+          {/* QR Scanner Section */}
+          <div className="max-w-md mx-auto">
+            <QRScanner />
+          </div>
+
           {/* Create Product Section */}
           <div className="max-w-2xl mx-auto">
             <CreateProductForm />
