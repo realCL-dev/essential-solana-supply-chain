@@ -1,6 +1,6 @@
 'use client'
 
-// import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { ReactNode /*, useState, useEffect */ } from 'react'
 
 // Import wallet adapter CSS
