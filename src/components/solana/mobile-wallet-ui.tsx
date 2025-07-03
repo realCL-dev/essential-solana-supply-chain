@@ -12,6 +12,7 @@ export function MobileWalletButton() {
 
   useEffect(() => {
     const checkMobile = () => {
+      if (typeof navigator === 'undefined') return false
       const userAgent = navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor || (window as unknown as { opera?: string }).opera || ''
       return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(String(userAgent).toLowerCase())
     }
@@ -56,6 +57,7 @@ export function MobileWalletStatus() {
 
   useEffect(() => {
     const checkMobile = () => {
+      if (typeof navigator === 'undefined') return false
       const userAgent = navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor || (window as unknown as { opera?: string }).opera || ''
       return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(String(userAgent).toLowerCase())
     }
@@ -108,7 +110,6 @@ export function MobileWalletStatus() {
                   📱 Install a mobile wallet app:
                   <br />• Phantom Mobile
                   <br />• Solflare Mobile
-                  <br />• Glow Wallet
                 </div>
               </div>
             )}
@@ -126,6 +127,7 @@ export function useMobileWalletDeepLink() {
 
   useEffect(() => {
     const checkMobile = () => {
+      if (typeof navigator === 'undefined') return false
       const userAgent = navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor || (window as unknown as { opera?: string }).opera || ''
       return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(String(userAgent).toLowerCase())
     }
@@ -136,13 +138,12 @@ export function useMobileWalletDeepLink() {
     if (!isMobile) return
 
     const deepLinks = {
-      phantom: 'https://phantom.app/ul/browse/' + encodeURIComponent(window.location.href),
-      solflare: 'https://solflare.com/ul/browse/' + encodeURIComponent(window.location.href),
-      glow: 'https://glow.app/ul/browse/' + encodeURIComponent(window.location.href),
+      phantom: 'https://phantom.app/ul/browse/' + encodeURIComponent(typeof window !== 'undefined' ? window.location.href : ''),
+      solflare: 'https://solflare.com/ul/browse/' + encodeURIComponent(typeof window !== 'undefined' ? window.location.href : ''),
     }
 
     const link = deepLinks[walletName.toLowerCase() as keyof typeof deepLinks]
-    if (link) {
+    if (link && typeof window !== 'undefined') {
       window.open(link, '_blank')
     }
   }

@@ -43,7 +43,7 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
 
   const generateQRCode = async () => {
     try {
-      const connectUrl = `${window.location.origin}/connect`
+      const connectUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/connect`
       const qrDataURL = await QRCode.toDataURL(connectUrl, {
         width: 300,
         margin: 4,
@@ -63,7 +63,7 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
     {
       name: 'Phantom',
       icon: '👻',
-      deepLink: 'https://phantom.app/ul/browse/' + encodeURIComponent(window.location.href),
+      deepLink: 'https://phantom.app/ul/browse/' + encodeURIComponent(typeof window !== 'undefined' ? window.location.href : ''),
       storeLink: {
         ios: 'https://apps.apple.com/app/phantom-solana-wallet/id1598432977',
         android: 'https://play.google.com/store/apps/details?id=app.phantom'
@@ -72,7 +72,7 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
     {
       name: 'Solflare',
       icon: '🔥',
-      deepLink: 'https://solflare.com/ul/browse/' + encodeURIComponent(window.location.href),
+      deepLink: 'https://solflare.com/ul/browse/' + encodeURIComponent(typeof window !== 'undefined' ? window.location.href : ''),
       storeLink: {
         ios: 'https://apps.apple.com/app/solflare/id1580902717',
         android: 'https://play.google.com/store/apps/details?id=com.solflare.mobile'

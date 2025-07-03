@@ -67,9 +67,11 @@ export function useMobileWalletTransaction() {
       return signature
     } catch (error) {
       // Enhanced mobile error handling
-      const isMobile = navigator.userAgent.includes('Mobile') || 
-                      navigator.userAgent.includes('Android') || 
-                      navigator.userAgent.includes('iPhone')
+      const isMobile = typeof navigator !== 'undefined' && (
+        navigator.userAgent.includes('Mobile') || 
+        navigator.userAgent.includes('Android') || 
+        navigator.userAgent.includes('iPhone')
+      )
 
       let errorMessage = 'Transaction failed'
       

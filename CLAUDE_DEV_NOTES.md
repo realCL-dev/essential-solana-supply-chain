@@ -31,7 +31,7 @@ npm run type-check    # TypeScript type checking (if available)
 - Uses `@solana/wallet-adapter-react` for mobile wallets
 - Fallback to `@wallet-ui/react` for desktop
 - Mobile detection via enhanced user agent checking
-- Deep link support for Phantom, Solflare, Glow wallets
+- Deep link support for Phantom, Solflare wallets (Glow removed - not operational)
 
 ### 🏗️ Architecture
 ```
@@ -42,5 +42,22 @@ Enhanced Provider System:
 └── Original SolanaProvider (gill-based for desktop)
 ```
 
+### 🐛 Mobile-Specific Issues Fixed
+**Issue**: Client-side exception on mobile devices during app loading
+**Root Cause**: SSR/hydration mismatch - accessing `window` and `navigator` objects before client-side mounting
+**Fixed Files**:
+- `mobile-wallet-connection.tsx`: Added `typeof window !== 'undefined'` checks
+- `mobile-wallet-transaction.tsx`: Added `typeof navigator !== 'undefined'` checks  
+- `mobile-wallet-ui.tsx`: Added browser environment checks, removed Glow wallet
+
+**Key Learning**: Always check for browser environment before accessing DOM/Window APIs in Next.js apps
+
+### 🔧 Mobile Debugging Tips
+1. Check browser console on mobile device for client-side errors
+2. Look for hydration mismatches between server and client
+3. Use Chrome DevTools mobile emulation for testing
+4. Test with actual mobile devices for wallet deep linking
+
 ## Last Updated
 Created: 2025-01-03 (Mobile wallet integration implementation)
+Updated: 2025-01-03 (Fixed mobile client-side exceptions)
