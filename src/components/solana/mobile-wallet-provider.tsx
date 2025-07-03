@@ -3,6 +3,7 @@
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
+import { WalletUiContextProvider } from '@wallet-ui/react'
 import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { 
   PhantomWalletAdapter,
@@ -68,7 +69,7 @@ export function MobileWalletProvider({
         autoConnect={false} // Don't auto-connect on mobile for better UX
       >
         <WalletModalProvider>
-          {children}
+          <WalletUiContextProvider>{children}</WalletUiContextProvider>
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
