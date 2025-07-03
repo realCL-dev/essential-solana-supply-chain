@@ -2,14 +2,7 @@
 
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
-import { WalletUiContextProvider } from '@wallet-ui/react'
-import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
-import { 
-  PhantomWalletAdapter,
-  SolflareWalletAdapter,
-  TrustWalletAdapter
-} from '@solana/wallet-adapter-wallets'
+
 import { clusterApiUrl } from '@solana/web3.js'
 import { ReactNode, useMemo, useState, useEffect } from 'react'
 

@@ -7,7 +7,8 @@ import { Menu, X } from 'lucide-react'
 import { ThemeSelect } from '@/components/theme-select'
 import { ClusterButton, WalletButton } from '@/components/solana/solana-provider'
 
-export function AppHeader({ links = [] }: { links: { label: string; path: string }[] }) {
+export function AppHeader({ links: initialLinks = [] }: { links: { label: string; path: string }[] }) {
+  const links = Array.isArray(initialLinks) ? initialLinks : []
   const pathname = usePathname()
   const [showMenu, setShowMenu] = useState(false)
 
