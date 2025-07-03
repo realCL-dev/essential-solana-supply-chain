@@ -202,7 +202,6 @@ export function CreateProductForm() {
   const { serialNumber, setSerialNumber, description, setDescription, reset, isValid } = useCreateProductForm()
   const initializeMutation = useInitializeProductMutation()
   const [lastError, setLastError] = useState<string>('')
-  const [networkInfo, setNetworkInfo] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
