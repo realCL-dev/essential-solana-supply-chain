@@ -213,8 +213,29 @@ export function CreateProductForm() {
       reset()
     } catch (error) {
       console.error('Error creating product:', error)
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred'
-      setLastError(`Debug info: ${errorMsg}`)
+      
+      // Enhanced error debugging for mobile
+      let errorMsg = 'Unknown error occurred'
+      
+      if (error instanceof Error) {
+        errorMsg = error.message
+      } else if (typeof error === 'string') {
+        errorMsg = error
+      } else if (error && typeof error === 'object') {
+        // Try to extract useful info from object errors
+        const errorObj = error as any
+        if (errorObj.message) {
+          errorMsg = errorObj.message
+        } else if (errorObj.error) {
+          errorMsg = errorObj.error
+        } else if (errorObj.code) {
+          errorMsg = `Error code: ${errorObj.code}`
+        } else {
+          errorMsg = `Object error: ${JSON.stringify(error)}`
+        }
+      }
+      
+      setLastError(`Debug info: ${errorMsg} | Type: ${typeof error} | Browser: ${navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'}`)
     }
   }
 

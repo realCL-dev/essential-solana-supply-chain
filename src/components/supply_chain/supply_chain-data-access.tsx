@@ -69,6 +69,7 @@ export function useInitializeProductMutation() {
     onError: (error) => {
       console.error('Initialize product error:', error)
       let errorMessage = 'Failed to initialize product'
+      let debugInfo = ''
       
       if (error instanceof Error) {
         if (error.message.includes('0x7d6') || error.message.includes('ConstraintSeeds')) {
@@ -84,9 +85,32 @@ export function useInitializeProductMutation() {
         } else {
           errorMessage = `Product creation failed: ${error.message}`
         }
+        debugInfo = error.message
+      } else if (typeof error === 'string') {
+        errorMessage = `Product creation failed: ${error}`
+        debugInfo = error
+      } else if (error && typeof error === 'object') {
+        const errorObj = error as any
+        if (errorObj.message) {
+          debugInfo = errorObj.message
+          errorMessage = `Product creation failed: ${errorObj.message}`
+        } else if (errorObj.error) {
+          debugInfo = errorObj.error
+          errorMessage = `Product creation failed: ${errorObj.error}`
+        } else {
+          debugInfo = JSON.stringify(error)
+          errorMessage = `Product creation failed: Unknown error (check debug info)`
+        }
+      } else {
+        debugInfo = `Type: ${typeof error}, Value: ${String(error)}`
+        errorMessage = 'Product creation failed: Unknown error type'
       }
       
-      toast.error(errorMessage)
+      // Add mobile/browser context
+      const isMobile = navigator.userAgent.includes('Mobile') || navigator.userAgent.includes('Android') || navigator.userAgent.includes('iPhone')
+      const browserInfo = isMobile ? 'Mobile' : 'Desktop'
+      
+      toast.error(`${errorMessage} [${browserInfo}] - Debug: ${debugInfo}`)
     },
   })
 }
