@@ -502,9 +502,24 @@ export function QRScanner() {
   const [scannedProductAddress, setScannedProductAddress] = useState<Address | null>(null)
   const [error, setError] = useState<string>('')
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [isMobileDevice, setIsMobileDevice] = useState(false)
+  const scanningTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const stopScanning = useCallback(() => {
     setIsScanning(false)
+    if (scanningTimeoutRef.current) {
+      clearTimeout(scanningTimeoutRef.current)
+      scanningTimeoutRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    // Detect mobile device
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
+    }
+    setIsMobileDevice(checkMobile())
   }, [])
 
   useEffect(() => {
@@ -513,35 +528,70 @@ export function QRScanner() {
     }
 
     let qrScanner: QrScanner | null = null
+    let lastScanTime = 0
 
     const videoEl = videoRef.current
     if (videoEl) {
+      // Mobile-optimized video constraints
+      const constraints = {
+        video: {
+          facingMode: 'environment',
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 },
+          aspectRatio: 16/9
+        }
+      }
+
+      // Apply mobile-specific constraints
+      if (isMobileDevice) {
+        navigator.mediaDevices.getUserMedia(constraints)
+          .then(stream => {
+            videoEl.srcObject = stream
+          })
+          .catch(err => {
+            console.error('Mobile camera setup error:', err)
+            setError('Failed to access camera. Please ensure camera permissions are granted.')
+          })
+      }
+
+      // Throttled scanning function for mobile performance
+      const throttledScanResult = (result: QrScanner.ScanResult) => {
+        const currentTime = Date.now()
+        if (currentTime - lastScanTime < 300) { // 300ms throttle
+          return
+        }
+        lastScanTime = currentTime
+
+        console.log('QR Code detected:', result)
+        const resultData = result.data
+        try {
+          const url = new URL(resultData)
+          const productAddress = url.searchParams.get('scan')
+          if (productAddress) {
+            setScannedProductAddress(productAddress as Address)
+            stopScanning()
+          } else {
+            setError('Invalid QR code. Please scan a product QR code.')
+          }
+        } catch {
+          if (resultData.length >= 32 && resultData.length <= 44) {
+            setScannedProductAddress(resultData as Address)
+            stopScanning()
+          } else {
+            setError('Invalid QR code format.')
+          }
+        }
+      }
+
       qrScanner = new QrScanner(
         videoEl,
-        (result: QrScanner.ScanResult) => {
-          console.log('QR Code detected:', result)
-          const resultData = result.data
-          try {
-            const url = new URL(resultData)
-            const productAddress = url.searchParams.get('scan')
-            if (productAddress) {
-              setScannedProductAddress(productAddress as Address)
-              stopScanning()
-            } else {
-              setError('Invalid QR code. Please scan a product QR code.')
-            }
-          } catch {
-            if (resultData.length >= 32 && resultData.length <= 44) {
-              setScannedProductAddress(resultData as Address)
-              stopScanning()
-            } else {
-              setError('Invalid QR code format.')
-            }
-          }
-        },
+        throttledScanResult,
         {
+          returnDetailedScanResult: true,
           highlightScanRegion: true,
           highlightCodeOutline: true,
+          maxScansPerSecond: isMobileDevice ? 5 : 10, // Reduce for mobile performance
+          preferredCamera: 'environment'
         }
       )
 
@@ -570,8 +620,11 @@ export function QRScanner() {
 
     return () => {
       qrScanner?.destroy()
+      if (scanningTimeoutRef.current) {
+        clearTimeout(scanningTimeoutRef.current)
+      }
     }
-  }, [isScanning, stopScanning])
+  }, [isScanning, stopScanning, isMobileDevice])
 
   if (scannedProductAddress) {
     return (
@@ -603,12 +656,21 @@ export function QRScanner() {
           <div className="relative">
             <video
               ref={videoRef}
-              className="w-full h-[300px] bg-black rounded-lg object-cover"
+              className={`w-full rounded-lg object-cover ${isMobileDevice ? 'h-[400px]' : 'h-[300px]'} bg-black`}
               autoPlay
               muted
               playsInline
+              style={{ 
+                transform: isMobileDevice ? 'scale(1.1)' : 'scale(1)',
+                transformOrigin: 'center'
+              }}
             />
             <div className="absolute top-0 left-0 w-full h-full" style={{ boxShadow: 'inset 0 0 0 5px rgba(255, 255, 255, 0.5)' }}></div>
+            {isMobileDevice && (
+              <div className="absolute bottom-2 left-2 right-2 bg-black bg-opacity-50 text-white text-xs p-2 rounded">
+                Hold steady and ensure QR code is well-lit for better scanning
+              </div>
+            )}
           </div>
 
           {error && (
