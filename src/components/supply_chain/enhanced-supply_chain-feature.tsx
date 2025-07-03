@@ -15,7 +15,10 @@ import { AppHero } from '../app-hero'
 import { useWalletUi } from '@wallet-ui/react'
 import { useWallet } from '@solana/wallet-adapter-react'
 
+import { useIsMobile } from '../solana/use-is-mobile'
+
 export default function EnhancedSupplyChainFeature() {
+  const isMobile = useIsMobile()
   const [useMobileWallet, setUseMobileWallet] = useState(false)
   const [showWalletSelector, setShowWalletSelector] = useState(false)
 
@@ -25,15 +28,12 @@ export default function EnhancedSupplyChainFeature() {
 
   useEffect(() => {
     const checkWalletSystem = () => {
-      const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
-        navigator.userAgent.toLowerCase()
-      )
       const preference = localStorage.getItem('wallet-preference')
       setUseMobileWallet(isMobile || preference === 'mobile')
     }
     
     checkWalletSystem()
-  }, [])
+  }, [isMobile])
 
   // Determine if wallet is connected based on the current system
   const isWalletConnected = useMobileWallet ? walletAdapterConnected : !!gillAccount
