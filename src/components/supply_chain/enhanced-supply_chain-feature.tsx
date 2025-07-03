@@ -19,8 +19,8 @@ export default function EnhancedSupplyChainFeature() {
   const [useMobileWallet, setUseMobileWallet] = useState(false)
   const [showWalletSelector, setShowWalletSelector] = useState(false)
 
-  // Try to get wallet state from both systems
-  const { account: gillAccount } = useWalletUi().catch(() => ({ account: null })) || { account: null }
+  const walletUi = useWalletUi()
+  const gillAccount = walletUi ? walletUi.account : null
   const { connected: walletAdapterConnected, publicKey: walletAdapterKey } = useWallet() || { connected: false, publicKey: null }
 
   useEffect(() => {

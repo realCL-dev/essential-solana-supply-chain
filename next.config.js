@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        "pino-pretty": false,
+      }
+    }
+    return config
+  },
   // Enable HTTPS in development
   ...(process.env.HTTPS === 'true' && {
     server: {
