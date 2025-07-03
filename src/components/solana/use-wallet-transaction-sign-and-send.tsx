@@ -67,7 +67,41 @@ export function useWalletTransactionSignAndSend() {
               throw new Error('Transaction expired (mobile) - please try again')
             }
           }
-          throw new Error(`Mobile transaction error: ${signError instanceof Error ? signError.message : 'Unknown mobile error'}`)
+          // Deep inspection of mobile error object
+          let mobileErrorMsg = 'Unknown mobile error'
+          
+          if (signError instanceof Error) {
+            mobileErrorMsg = signError.message
+          } else if (signError && typeof signError === 'object') {
+            const errorObj = signError as Record<string, unknown>
+            
+            // Try common error properties
+            const possibleErrorProps = ['message', 'error', 'description', 'reason', 'code', 'name', 'details']
+            let foundError = false
+            
+            for (const prop of possibleErrorProps) {
+              if (errorObj[prop] && typeof errorObj[prop] === 'string') {
+                mobileErrorMsg = `${prop}: ${errorObj[prop]}`
+                foundError = true
+                break
+              }
+            }
+            
+            if (!foundError) {
+              // Show the full object structure for debugging
+              try {
+                const keys = Object.keys(errorObj)
+                const errorStructure = keys.map(key => `${key}: ${typeof errorObj[key]}`).join(', ')
+                mobileErrorMsg = `Object structure: {${errorStructure}} | Full: ${JSON.stringify(signError)}`
+              } catch {
+                mobileErrorMsg = `Complex object error (keys: ${Object.keys(errorObj).join(', ')})`
+              }
+            }
+          } else {
+            mobileErrorMsg = `Type: ${typeof signError}, Value: ${String(signError)}`
+          }
+          
+          throw new Error(`Mobile transaction error: ${mobileErrorMsg}`)
         }
         
         throw signError
