@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { WalletButton } from '../solana/solana-provider'
-import { MobileWalletStatus, MobileWalletButton } from '../solana/mobile-wallet-ui'
+import { MobileWalletStatus } from '../solana/mobile-wallet-ui'
 import { WalletSystemSelector } from '../solana/enhanced-solana-provider'
 import { 
   CreateProductForm, 

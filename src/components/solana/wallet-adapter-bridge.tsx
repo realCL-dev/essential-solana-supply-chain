@@ -4,7 +4,7 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { useMobileWalletTransaction } from './mobile-wallet-transaction'
 import { createContext, useContext, ReactNode, useMemo } from 'react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js'
+import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 
 // Bridge context to make wallet adapter compatible with existing gill-based code
 interface WalletAdapterBridgeContextType {

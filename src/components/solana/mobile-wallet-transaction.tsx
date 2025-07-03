@@ -1,13 +1,12 @@
 'use client'
 
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
-import { Transaction, PublicKey, TransactionInstruction } from '@solana/web3.js'
+import { Transaction, TransactionInstruction } from '@solana/web3.js'
 import { useCallback } from 'react'
-import { toast } from 'sonner'
 
 export function useMobileWalletTransaction() {
   const { connection } = useConnection()
-  const { publicKey, sendTransaction, signTransaction } = useWallet()
+  const { publicKey, sendTransaction } = useWallet()
 
   const sendTransactionMobile = useCallback(async (
     transaction: Transaction,
