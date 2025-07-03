@@ -55,7 +55,16 @@ export function useInitializeProductMutation() {
     },
     onSuccess: async (tx) => {
       toastTx(tx)
-      await queryClient.invalidateQueries({ queryKey: ['supply_chain', 'products', { cluster }] })
+      
+      // Wait a bit for the transaction to be fully processed on-chain
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Invalidate multiple related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['supply_chain', 'products', { cluster }] }),
+        queryClient.invalidateQueries({ queryKey: ['supply_chain'] }), // Broader invalidation
+        queryClient.refetchQueries({ queryKey: ['supply_chain', 'products', { cluster }] }) // Force refetch
+      ])
     },
     onError: (error) => {
       console.error('Initialize product error:', error)
