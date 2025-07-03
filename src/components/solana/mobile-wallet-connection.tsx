@@ -12,6 +12,12 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent
+  }
+}
+
 interface MobileWalletConnectionProps {
   onWalletSelected?: (walletName: string) => void
 }
@@ -70,15 +76,6 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
       storeLink: {
         ios: 'https://apps.apple.com/app/solflare/id1580902717',
         android: 'https://play.google.com/store/apps/details?id=com.solflare.mobile'
-      }
-    },
-    {
-      name: 'Glow',
-      icon: '✨',
-      deepLink: 'https://glow.app/ul/browse/' + encodeURIComponent(window.location.href),
-      storeLink: {
-        ios: 'https://apps.apple.com/app/glow-solana-wallet/id1599584512',
-        android: 'https://play.google.com/store/apps/details?id=com.glow.mobile'
       }
     }
   ]
