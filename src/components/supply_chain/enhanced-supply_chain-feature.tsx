@@ -28,6 +28,7 @@ export default function EnhancedSupplyChainFeature() {
 
   useEffect(() => {
     const checkWalletSystem = () => {
+      if (typeof window === 'undefined') return
       const preference = localStorage.getItem('wallet-preference')
       setUseMobileWallet(isMobile || preference === 'mobile')
     }

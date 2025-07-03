@@ -44,7 +44,7 @@ export function ClusterChecker({ children }: { children: ReactNode }) {
         }
         className="mb-4"
       >
-        Error connecting to cluster <span className="font-bold">{cluster.label}</span>.
+        Error connecting to cluster <span className="font-bold">{cluster?.label || 'Unknown Cluster'}</span>.
       </AppAlert>
     )
   }

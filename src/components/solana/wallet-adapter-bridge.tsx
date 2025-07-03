@@ -2,7 +2,7 @@
 
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { useMobileWalletTransaction } from './mobile-wallet-transaction'
-import { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react'
+import { createContext, useContext, ReactNode, useMemo, useState, useEffect, useCallback } from 'react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 
@@ -39,19 +39,19 @@ export function WalletAdapterBridge({
   children: ReactNode
   network?: WalletAdapterNetwork 
 }) {
-  const { connected, publicKey, connecting } = useWallet()
-  const { connection } = useConnection()
-  const { sendTransactionMobile, createTransactionFromInstructions } = useMobileWalletTransaction()
-
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  const { connected, publicKey, connecting } = useWallet()
+  const { connection } = useConnection()
+  const { sendTransactionMobile, createTransactionFromInstructions } = useMobileWalletTransaction()
+
   // Create a client object that mimics the gill client interface
   const client = useMemo(() => {
-    if (!mounted) return null // Return null until mounted
+    if (!mounted || !connection) return null // Return null until mounted and connection is available
     return {
       rpc: {
         getLatestBlockhash: async () => {
@@ -74,15 +74,6 @@ export function WalletAdapterBridge({
     }
   }, [connection, mounted])
 
-  const signAndSendTransaction = async (instruction: TransactionInstruction): Promise<string> => {
-    if (!connected || !publicKey) {
-      throw new Error('Wallet not connected')
-    }
-
-    const transaction = await createTransactionFromInstructions([instruction])
-    return await sendTransactionMobile(transaction)
-  }
-
   const cluster = useMemo(() => {
     if (!mounted) return '' // Return empty string until mounted
     switch (network) {
@@ -96,19 +87,27 @@ export function WalletAdapterBridge({
     }
   }, [network, mounted])
 
-  if (!mounted || !client) {
-    return null // Or a loading spinner
-  }
+  const signAndSendTransaction = useCallback(async (instruction: TransactionInstruction): Promise<string> => {
+    if (!connected || !publicKey) {
+      throw new Error('Wallet not connected')
+    }
 
-  const value: WalletAdapterBridgeContextType = {
-    connected,
-    publicKey,
-    connecting,
-    cluster,
-    network,
-    signAndSendTransaction,
-    client,
-  }
+    const transaction = await createTransactionFromInstructions([instruction])
+    return await sendTransactionMobile(transaction)
+  }, [connected, publicKey, sendTransactionMobile, createTransactionFromInstructions])
+
+  const value: WalletAdapterBridgeContextType | null = useMemo(() => {
+    if (!mounted || !client) return null
+    return {
+      connected,
+      publicKey,
+      connecting,
+      cluster,
+      network,
+      signAndSendTransaction,
+      client,
+    }
+  }, [connected, publicKey, connecting, cluster, network, signAndSendTransaction, client, mounted])
 
   return (
     <WalletAdapterBridgeContext.Provider value={value}>
@@ -121,7 +120,23 @@ export function WalletAdapterBridge({
 export function useWalletAdapterBridge() {
   const context = useContext(WalletAdapterBridgeContext)
   if (!context) {
-    throw new Error('useWalletAdapterBridge must be used within WalletAdapterBridge')
+    // Return a default value or throw an error if context is not available
+    // This ensures that the hook always returns a consistent type
+    return {
+      connected: false,
+      publicKey: null,
+      connecting: false,
+      cluster: '',
+      network: WalletAdapterNetwork.Devnet,
+      signAndSendTransaction: async () => { throw new Error('Wallet not connected') },
+      client: {
+        rpc: {
+          getLatestBlockhash: async () => ({ value: { blockhash: '', lastValidBlockHeight: 0 } }),
+          getBalance: async () => ({ value: 0 }),
+          getGenesisHash: async () => ''
+        }
+      }
+    }
   }
   return context
 }
