@@ -3,11 +3,10 @@
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
+import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { 
   PhantomWalletAdapter,
   SolflareWalletAdapter,
-  GlowWalletAdapter,
-  BackpackWalletAdapter,
   TrustWalletAdapter
 } from '@solana/wallet-adapter-wallets'
 import { clusterApiUrl } from '@solana/web3.js'
@@ -46,9 +45,6 @@ export function MobileWalletProvider({
     
     // Solflare - Good mobile support
     new SolflareWalletAdapter(),
-    
-    // Glow - Mobile-first design
-    new GlowWalletAdapter(),
     
     // Backpack - xNFT support
     new BackpackWalletAdapter(),

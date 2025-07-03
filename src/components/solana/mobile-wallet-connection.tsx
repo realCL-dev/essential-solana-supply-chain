@@ -6,6 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import QRCode from 'qrcode'
 import Image from 'next/image'
 
+// PWA BeforeInstallPrompt event type
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 interface MobileWalletConnectionProps {
   onWalletSelected?: (walletName: string) => void
 }
@@ -17,8 +23,8 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
 
   useEffect(() => {
     const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || ''
-      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
+      const userAgent = navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor || (window as unknown as { opera?: string }).opera || ''
+      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(String(userAgent).toLowerCase())
     }
     setIsMobile(checkMobile())
   }, [])
@@ -170,7 +176,7 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
         {isMobile && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="text-sm text-blue-800">
-              💡 <strong>Don't have a wallet?</strong>
+              💡 <strong>Don&apos;t have a wallet?</strong>
               <br />Download from your app store and return here to connect.
             </div>
           </div>
@@ -182,11 +188,11 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
 
 // Progressive Web App installation prompt
 export function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
 
   useEffect(() => {
-    const handler = (e: any) => {
+    const handler = (e: BeforeInstallPromptEvent) => {
       e.preventDefault()
       setDeferredPrompt(e)
       setShowInstallPrompt(true)
