@@ -90,11 +90,11 @@ export function useInitializeProductMutation() {
         errorMessage = `Product creation failed: ${error}`
         debugInfo = error
       } else if (error && typeof error === 'object') {
-        const errorObj = error as any
-        if (errorObj.message) {
+        const errorObj = error as Record<string, unknown>
+        if (errorObj.message && typeof errorObj.message === 'string') {
           debugInfo = errorObj.message
           errorMessage = `Product creation failed: ${errorObj.message}`
-        } else if (errorObj.error) {
+        } else if (errorObj.error && typeof errorObj.error === 'string') {
           debugInfo = errorObj.error
           errorMessage = `Product creation failed: ${errorObj.error}`
         } else {

@@ -223,12 +223,12 @@ export function CreateProductForm() {
         errorMsg = error
       } else if (error && typeof error === 'object') {
         // Try to extract useful info from object errors
-        const errorObj = error as any
-        if (errorObj.message) {
+        const errorObj = error as Record<string, unknown>
+        if (errorObj.message && typeof errorObj.message === 'string') {
           errorMsg = errorObj.message
-        } else if (errorObj.error) {
+        } else if (errorObj.error && typeof errorObj.error === 'string') {
           errorMsg = errorObj.error
-        } else if (errorObj.code) {
+        } else if (errorObj.code && (typeof errorObj.code === 'string' || typeof errorObj.code === 'number')) {
           errorMsg = `Error code: ${errorObj.code}`
         } else {
           errorMsg = `Object error: ${JSON.stringify(error)}`
