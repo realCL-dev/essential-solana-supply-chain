@@ -2,7 +2,7 @@
 
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { useMobileWalletTransaction } from './mobile-wallet-transaction'
-import { createContext, useContext, ReactNode, useMemo } from 'react'
+import { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 
@@ -43,27 +43,36 @@ export function WalletAdapterBridge({
   const { connection } = useConnection()
   const { sendTransactionMobile, createTransactionFromInstructions } = useMobileWalletTransaction()
 
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // Create a client object that mimics the gill client interface
-  const client = useMemo(() => ({
-    rpc: {
-      getLatestBlockhash: async () => {
-        const result = await connection.getLatestBlockhash('confirmed')
-        return {
-          value: {
-            blockhash: result.blockhash,
-            lastValidBlockHeight: result.lastValidBlockHeight
+  const client = useMemo(() => {
+    if (!mounted) return null // Return null until mounted
+    return {
+      rpc: {
+        getLatestBlockhash: async () => {
+          const result = await connection.getLatestBlockhash('confirmed')
+          return {
+            value: {
+              blockhash: result.blockhash,
+              lastValidBlockHeight: result.lastValidBlockHeight
+            }
           }
+        },
+        getBalance: async (address: PublicKey) => {
+          const balance = await connection.getBalance(address)
+          return { value: balance }
+        },
+        getGenesisHash: async () => {
+          return await connection.getGenesisHash()
         }
-      },
-      getBalance: async (address: PublicKey) => {
-        const balance = await connection.getBalance(address)
-        return { value: balance }
-      },
-      getGenesisHash: async () => {
-        return await connection.getGenesisHash()
       }
     }
-  }), [connection])
+  }, [connection, mounted])
 
   const signAndSendTransaction = async (instruction: TransactionInstruction): Promise<string> => {
     if (!connected || !publicKey) {
@@ -75,6 +84,7 @@ export function WalletAdapterBridge({
   }
 
   const cluster = useMemo(() => {
+    if (!mounted) return '' // Return empty string until mounted
     switch (network) {
       case WalletAdapterNetwork.Mainnet:
         return 'mainnet-beta'
@@ -84,7 +94,11 @@ export function WalletAdapterBridge({
       default:
         return 'devnet'
     }
-  }, [network])
+  }, [network, mounted])
+
+  if (!mounted || !client) {
+    return null // Or a loading spinner
+  }
 
   const value: WalletAdapterBridgeContextType = {
     connected,
