@@ -22,6 +22,7 @@ import { ReactNode, useState, useEffect, useCallback, useRef } from 'react'
 import type { Account, Address } from 'gill'
 import QRCode from 'qrcode'
 import QrScanner from 'qr-scanner'
+import Image from 'next/image'
 
 // Type for Product account data structure
 type ProductData = {
@@ -465,10 +466,12 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
       <h4 className="font-medium text-sm mb-3">Product QR Code</h4>
       {qrCodeDataURL && (
         <div className="space-y-3">
-          <img 
+          <Image 
             src={qrCodeDataURL} 
             alt="Product QR Code" 
             className="mx-auto border rounded"
+            width={200}
+            height={200}
           />
           <div className="space-y-1">
             <p className="text-xs text-gray-600">
@@ -516,7 +519,7 @@ export function QRScanner() {
   useEffect(() => {
     // Detect mobile device
     const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+      const userAgent = navigator.userAgent || navigator.vendor || (window as Window & typeof globalThis & { opera?: string }).opera || ''
       return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
     }
     setIsMobileDevice(checkMobile())
