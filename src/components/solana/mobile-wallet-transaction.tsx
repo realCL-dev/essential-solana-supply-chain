@@ -44,6 +44,9 @@ export function useMobileWalletTransaction() {
       }
 
       // Set recent blockhash and fee payer
+      if (!blockhashInfo) {
+        throw new Error('Failed to get recent blockhash')
+      }
       transaction.recentBlockhash = blockhashInfo.blockhash
       transaction.feePayer = publicKey
 
