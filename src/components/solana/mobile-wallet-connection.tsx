@@ -29,6 +29,7 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
 
   useEffect(() => {
     const checkMobile = () => {
+      if (typeof navigator === 'undefined') return false
       const userAgent = navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor || (window as unknown as { opera?: string }).opera || ''
       return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(String(userAgent).toLowerCase())
     }
@@ -81,15 +82,17 @@ export function MobileWalletConnection({ onWalletSelected }: MobileWalletConnect
   ]
 
   const handleWalletClick = (wallet: typeof walletApps[0]) => {
-    if (isMobile) {
+    if (isMobile && typeof window !== 'undefined') {
       // Try deep link first
       window.location.href = wallet.deepLink
       
       // Fallback to app store after a delay
       setTimeout(() => {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-        const storeUrl = isIOS ? wallet.storeLink.ios : wallet.storeLink.android
-        window.open(storeUrl, '_blank')
+        if (typeof navigator !== 'undefined') {
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+          const storeUrl = isIOS ? wallet.storeLink.ios : wallet.storeLink.android
+          window.open(storeUrl, '_blank')
+        }
       }, 2000)
     } else {
       // Desktop: show QR code
@@ -189,6 +192,8 @@ export function PWAInstallPrompt() {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const handler = (e: BeforeInstallPromptEvent) => {
       e.preventDefault()
       setDeferredPrompt(e)

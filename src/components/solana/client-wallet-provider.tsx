@@ -17,12 +17,13 @@ export function ClientWalletProvider({ children }: ClientWalletProviderProps) {
   useEffect(() => {
     setMounted(true) // Component has mounted on the client
     const checkMobile = () => {
+      if (typeof navigator === 'undefined') return false
       const userAgent = navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor || (window as unknown as { opera?: string }).opera || ''
       return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(String(userAgent).toLowerCase())
     }
 
     const mobile = checkMobile()
-    const preference = localStorage.getItem('wallet-preference')
+    const preference = typeof window !== 'undefined' ? localStorage.getItem('wallet-preference') : null
     setUseMobileWallet(mobile || preference === 'mobile')
   }, [])
 

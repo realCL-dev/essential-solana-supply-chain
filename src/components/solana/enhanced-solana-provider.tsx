@@ -21,16 +21,19 @@ export function WalletSystemSelector() {
   const [currentSystem, setCurrentSystem] = useState<'auto' | 'mobile' | 'desktop'>('auto')
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     const preference = localStorage.getItem('wallet-preference') || 'auto'
     setCurrentSystem(preference as 'auto' | 'mobile' | 'desktop')
   }, [])
 
   const handleSystemChange = (system: 'auto' | 'mobile' | 'desktop') => {
     setCurrentSystem(system)
-    localStorage.setItem('wallet-preference', system)
-    
-    // Reload page to apply new wallet system
-    window.location.reload()
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('wallet-preference', system)
+      
+      // Reload page to apply new wallet system
+      window.location.reload()
+    }
   }
 
   return (
