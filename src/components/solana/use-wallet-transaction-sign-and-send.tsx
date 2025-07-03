@@ -10,6 +10,7 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
   signAndSendTransactionMessageWithSigners,
   TransactionSendingSigner,
+  type Blockhash,
 } from 'gill'
 
 export function useWalletTransactionSignAndSend() {
@@ -18,7 +19,7 @@ export function useWalletTransactionSignAndSend() {
   return async (ix: IInstruction, signer: TransactionSendingSigner) => {
     try {
       // Get latest blockhash with retry for mobile networks
-      let latestBlockhash: { blockhash: string; lastValidBlockHeight: bigint } | undefined
+      let latestBlockhash: { blockhash: Blockhash; lastValidBlockHeight: bigint } | undefined
       let retries = 3
       while (retries > 0) {
         try {
