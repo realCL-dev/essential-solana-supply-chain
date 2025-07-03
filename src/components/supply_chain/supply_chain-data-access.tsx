@@ -39,13 +39,36 @@ export function useSupplyChainProgram() {
 
 // Product-related hooks
 export function useInitializeProductMutation() {
-  const { cluster } = useWalletUi()
+  const { cluster, client } = useWalletUi()
   const queryClient = useQueryClient()
   const signer = useWalletUiSigner()
   const signAndSend = useWalletTransactionSignAndSend()
 
   return useMutation({
     mutationFn: async ({ serialNumber, description }: { serialNumber: string; description: string }) => {
+      // Add network debugging for mobile
+      const isMobile = navigator.userAgent.includes('Mobile') || navigator.userAgent.includes('Android') || navigator.userAgent.includes('iPhone')
+      
+      if (isMobile) {
+        try {
+          // Check the actual network cluster
+          const genesisHash = await client.rpc.getGenesisHash().send()
+          console.log('Mobile network check - Genesis hash:', genesisHash)
+          console.log('Expected cluster:', cluster)
+          
+          // Check if wallet has SOL on this network
+          const balance = await client.rpc.getBalance(signer.address).send()
+          console.log('Mobile wallet balance:', balance.value, 'lamports =', Number(balance.value) / 1e9, 'SOL')
+          
+          if (Number(balance.value) === 0) {
+            throw new Error(`Mobile wallet has 0 SOL on ${cluster}. Please fund your wallet or switch to the correct network.`)
+          }
+        } catch (networkError) {
+          console.error('Mobile network check failed:', networkError)
+          throw new Error(`Mobile network issue: ${networkError instanceof Error ? networkError.message : 'Unknown network error'}`)
+        }
+      }
+      
       const instruction = await getInitializeProductInstructionAsync({
         owner: signer,
         serialNumber,
