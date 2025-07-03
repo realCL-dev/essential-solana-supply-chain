@@ -1,7 +1,7 @@
 'use client'
 
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
-import { ReactNode, useState, useEffect } from 'react'
+// import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
+import { ReactNode /*, useState, useEffect */ } from 'react'
 
 // Import wallet adapter CSS
 // import '@solana/wallet-adapter-react-ui/styles.css'
@@ -13,7 +13,7 @@ interface MobileWalletProviderProps {
 
 export function MobileWalletProvider({
   children,
-  network = WalletAdapterNetwork.Devnet
+  // network = WalletAdapterNetwork.Devnet
 }: MobileWalletProviderProps) {
   return <>{children}</>
 }

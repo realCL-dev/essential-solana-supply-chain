@@ -2,7 +2,9 @@
 
 import { createContext, useContext, ReactNode } from 'react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
-import { PublicKey, TransactionInstruction } from '@solana/web3.js'
+// import { PublicKey, TransactionInstruction } from '@solana/web3.js'
+// import { useMobileWalletTransaction } from './mobile-wallet-transaction'
+// import { useMemo, useState, useEffect, useCallback } from 'react'
 
 // Bridge context to make wallet adapter compatible with existing gill-based code
 interface WalletAdapterBridgeContextType {
@@ -16,13 +18,13 @@ interface WalletAdapterBridgeContextType {
   network: WalletAdapterNetwork
   
   // Transaction methods
-  signAndSendTransaction: (instruction: TransactionInstruction) => Promise<string>
+  signAndSendTransaction: (instruction: any) => Promise<string>
   
   // Compatibility with existing useWalletUi interface
   client: {
     rpc: {
       getLatestBlockhash: () => Promise<{ value: { blockhash: string; lastValidBlockHeight: number } }>
-      getBalance: (address: PublicKey) => Promise<{ value: number }>
+      getBalance: (address: any) => Promise<{ value: number }>
       getGenesisHash: () => Promise<string>
     }
   }
@@ -113,7 +115,7 @@ export function useWalletUi() {
 export function useWalletTransactionSignAndSend() {
   const { signAndSendTransaction } = useWalletAdapterBridge()
   
-  return async (instruction: TransactionInstruction) => {
+  return async (instruction: any) => {
     const signature = await signAndSendTransaction(instruction)
     // Convert signature to the format expected by existing code
     return signature
