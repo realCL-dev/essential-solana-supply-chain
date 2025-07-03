@@ -18,13 +18,13 @@ interface WalletAdapterBridgeContextType {
   network: WalletAdapterNetwork
   
   // Transaction methods
-  signAndSendTransaction: (instruction: any) => Promise<string>
+  signAndSendTransaction: (instruction: TransactionInstruction) => Promise<string>
   
   // Compatibility with existing useWalletUi interface
   client: {
     rpc: {
       getLatestBlockhash: () => Promise<{ value: { blockhash: string; lastValidBlockHeight: number } }>
-      getBalance: (address: any) => Promise<{ value: number }>
+      getBalance: (address: PublicKey) => Promise<{ value: number }>
       getGenesisHash: () => Promise<string>
     }
   }
@@ -115,7 +115,7 @@ export function useWalletUi() {
 export function useWalletTransactionSignAndSend() {
   const { signAndSendTransaction } = useWalletAdapterBridge()
   
-  return async (instruction: any) => {
+  return async (instruction: TransactionInstruction) => {
     const signature = await signAndSendTransaction(instruction)
     // Convert signature to the format expected by existing code
     return signature
