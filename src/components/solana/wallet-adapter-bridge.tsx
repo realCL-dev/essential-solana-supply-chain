@@ -1,8 +1,6 @@
 'use client'
 
-import { useWallet, useConnection } from '@solana/wallet-adapter-react'
-import { useMobileWalletTransaction } from './mobile-wallet-transaction'
-import { createContext, useContext, ReactNode, useMemo, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, ReactNode } from 'react'
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 
@@ -32,82 +30,28 @@ interface WalletAdapterBridgeContextType {
 
 const WalletAdapterBridgeContext = createContext<WalletAdapterBridgeContextType | null>(null)
 
-export function WalletAdapterBridge({ 
-  children, 
-  network = WalletAdapterNetwork.Devnet 
-}: { 
+export function WalletAdapterBridge({
+  children,
+  network = WalletAdapterNetwork.Devnet
+}: {
   children: ReactNode
-  network?: WalletAdapterNetwork 
+  network?: WalletAdapterNetwork
 }) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const { connected, publicKey, connecting } = useWallet()
-  const { connection } = useConnection()
-  const { sendTransactionMobile, createTransactionFromInstructions } = useMobileWalletTransaction()
-
-  // Create a client object that mimics the gill client interface
-  const client = useMemo(() => {
-    if (!mounted || !connection) return null // Return null until mounted and connection is available
-    return {
+  const value: WalletAdapterBridgeContextType = {
+    connected: false,
+    publicKey: null,
+    connecting: false,
+    cluster: 'devnet',
+    network,
+    signAndSendTransaction: async () => { throw new Error('Wallet functionality is disabled') },
+    client: {
       rpc: {
-        getLatestBlockhash: async () => {
-          const result = await connection.getLatestBlockhash('confirmed')
-          return {
-            value: {
-              blockhash: result.blockhash,
-              lastValidBlockHeight: result.lastValidBlockHeight
-            }
-          }
-        },
-        getBalance: async (address: PublicKey) => {
-          const balance = await connection.getBalance(address)
-          return { value: balance }
-        },
-        getGenesisHash: async () => {
-          return await connection.getGenesisHash()
-        }
+        getLatestBlockhash: async () => ({ value: { blockhash: '', lastValidBlockHeight: 0 } }),
+        getBalance: async () => ({ value: 0 }),
+        getGenesisHash: async () => ''
       }
     }
-  }, [connection, mounted])
-
-  const cluster = useMemo(() => {
-    if (!mounted) return '' // Return empty string until mounted
-    switch (network) {
-      case WalletAdapterNetwork.Mainnet:
-        return 'mainnet-beta'
-      case WalletAdapterNetwork.Testnet:
-        return 'testnet'
-      case WalletAdapterNetwork.Devnet:
-      default:
-        return 'devnet'
-    }
-  }, [network, mounted])
-
-  const signAndSendTransaction = useCallback(async (instruction: TransactionInstruction): Promise<string> => {
-    if (!connected || !publicKey) {
-      throw new Error('Wallet not connected')
-    }
-
-    const transaction = await createTransactionFromInstructions([instruction])
-    return await sendTransactionMobile(transaction)
-  }, [connected, publicKey, sendTransactionMobile, createTransactionFromInstructions])
-
-  const value: WalletAdapterBridgeContextType | null = useMemo(() => {
-    if (!mounted || !client) return null
-    return {
-      connected,
-      publicKey,
-      connecting,
-      cluster,
-      network,
-      signAndSendTransaction,
-      client,
-    }
-  }, [connected, publicKey, connecting, cluster, network, signAndSendTransaction, client, mounted])
+  }
 
   return (
     <WalletAdapterBridgeContext.Provider value={value}>
