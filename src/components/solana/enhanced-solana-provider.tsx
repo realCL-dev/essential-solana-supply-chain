@@ -1,52 +1,18 @@
 'use client'
 
-import { ReactNode, useState, useEffect } from 'react'
-import { SolanaProvider } from './solana-provider'
-import { MobileWalletProvider } from './mobile-wallet-provider'
-import { WalletAdapterBridge } from './wallet-adapter-bridge'
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
+import dynamic from 'next/dynamic'
+
+const ClientWalletProvider = dynamic(
+  () => import('./client-wallet-provider').then((mod) => mod.ClientWalletProvider),
+  { ssr: false }
+)
 
 interface EnhancedSolanaProviderProps {
   children: ReactNode
 }
 
 export function EnhancedSolanaProvider({ children }: EnhancedSolanaProviderProps) {
-  const [useMobileWallet, setUseMobileWallet] = useState(false)
-
-  useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor || (window as unknown as { opera?: string }).opera || ''
-      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(String(userAgent).toLowerCase())
-    }
-    
-    const mobile = checkMobile()
-    
-    // Check if user prefers mobile wallet (stored in localStorage)
-    const preference = localStorage.getItem('wallet-preference')
-    setUseMobileWallet(mobile || preference === 'mobile')
-  }, [])
-
-  // Mobile wallet system
-  if (useMobileWallet) {
-    return (
-      <MobileWalletProvider network={WalletAdapterNetwork.Devnet}>
-        <WalletAdapterBridge network={WalletAdapterNetwork.Devnet}>
-          <div className="mobile-wallet-enabled">
-            {children}
-          </div>
-        </WalletAdapterBridge>
-      </MobileWalletProvider>
-    )
-  }
-
-  // Original gill-based system for desktop
-  return (
-    <SolanaProvider>
-      <div className="desktop-wallet-enabled">
-        {children}
-      </div>
-    </SolanaProvider>
-  )
+  return <ClientWalletProvider>{children}</ClientWalletProvider>
 }
 
 // Wallet preference selector component

@@ -35,3 +35,10 @@ Example:
   ]
 }
 ```
+
+## Project Notes
+
+- The project uses a dual-wallet system: `@wallet-ui/react` for desktop and `@solana/wallet-adapter-react` for mobile.
+- The core logic for switching between these wallet systems is in `src/components/supply_chain/enhanced-supply_chain-feature.tsx`.
+- Mobile-specific features that require HTTPS (like the camera) are tested via Vercel deployments, which are triggered by pushing to GitHub.
+- The local development command is `npm run dev`.
