@@ -23,8 +23,8 @@ interface WalletAdapterBridgeContextType {
   // Compatibility with existing useWalletUi interface
   client: {
     rpc: {
-      getLatestBlockhash: () => Promise<{ value: { blockhash: string; lastValidBlockHeight: bigint } }>
-      getBalance: (address: PublicKey) => Promise<{ value: bigint }>
+      getLatestBlockhash: () => Promise<{ value: { blockhash: string; lastValidBlockHeight: number } }>
+      getBalance: (address: PublicKey) => Promise<{ value: number }>
       getGenesisHash: () => Promise<string>
     }
   }
@@ -51,13 +51,13 @@ export function WalletAdapterBridge({
         return {
           value: {
             blockhash: result.blockhash,
-            lastValidBlockHeight: BigInt(result.lastValidBlockHeight)
+            lastValidBlockHeight: result.lastValidBlockHeight
           }
         }
       },
       getBalance: async (address: PublicKey) => {
         const balance = await connection.getBalance(address)
-        return { value: BigInt(balance) }
+        return { value: balance }
       },
       getGenesisHash: async () => {
         return await connection.getGenesisHash()
