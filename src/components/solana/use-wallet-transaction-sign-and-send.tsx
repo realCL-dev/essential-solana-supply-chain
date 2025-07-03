@@ -18,7 +18,7 @@ export function useWalletTransactionSignAndSend() {
   return async (ix: IInstruction, signer: TransactionSendingSigner) => {
     try {
       // Get latest blockhash with retry for mobile networks
-      let latestBlockhash: any
+      let latestBlockhash: { blockhash: string; lastValidBlockHeight: bigint } | undefined
       let retries = 3
       while (retries > 0) {
         try {
@@ -30,6 +30,10 @@ export function useWalletTransactionSignAndSend() {
           if (retries === 0) throw error
           await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry
         }
+      }
+
+      if (!latestBlockhash) {
+        throw new Error('Failed to get latest blockhash after retries')
       }
 
       const message = pipe(
