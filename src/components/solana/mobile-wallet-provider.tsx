@@ -7,7 +7,7 @@ import { clusterApiUrl } from '@solana/web3.js'
 import { ReactNode, useMemo, useState, useEffect } from 'react'
 
 // Import wallet adapter CSS
-import '@solana/wallet-adapter-react-ui/styles.css'
+// import '@solana/wallet-adapter-react-ui/styles.css'
 
 interface MobileWalletProviderProps {
   children: ReactNode
