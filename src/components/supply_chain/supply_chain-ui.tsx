@@ -201,16 +201,20 @@ function ProductCard({ product }: { product: ProductAccount }) {
 export function CreateProductForm() {
   const { serialNumber, setSerialNumber, description, setDescription, reset, isValid } = useCreateProductForm()
   const initializeMutation = useInitializeProductMutation()
+  const [lastError, setLastError] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isValid) return
 
+    setLastError('')
     try {
       await initializeMutation.mutateAsync({ serialNumber, description })
       reset()
     } catch (error) {
       console.error('Error creating product:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred'
+      setLastError(`Debug info: ${errorMsg}`)
     }
   }
 
@@ -255,6 +259,13 @@ export function CreateProductForm() {
           >
             {initializeMutation.isPending ? 'Creating...' : 'Create Product'}
           </Button>
+          
+          {lastError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm font-medium">Error Details:</p>
+              <p className="text-red-600 text-xs mt-1 break-words">{lastError}</p>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>
@@ -306,6 +317,7 @@ function LogEventForm({ productAddress, onSuccess }: { productAddress: Address; 
           placeholder="Enter event description"
           required
           maxLength={200}
+          className="text-gray-900 bg-white"
         />
       </div>
       

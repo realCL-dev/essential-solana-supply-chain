@@ -57,7 +57,28 @@ export function useInitializeProductMutation() {
       toastTx(tx)
       await queryClient.invalidateQueries({ queryKey: ['supply_chain', 'products', { cluster }] })
     },
-    onError: () => toast.error('Failed to initialize product'),
+    onError: (error) => {
+      console.error('Initialize product error:', error)
+      let errorMessage = 'Failed to initialize product'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('0x7d6') || error.message.includes('ConstraintSeeds')) {
+          errorMessage = 'Product creation failed: Invalid account setup. Please try again.'
+        } else if (error.message.includes('0x1772') || error.message.includes('UnauthorizedAccess')) {
+          errorMessage = 'Product creation failed: Unauthorized access. Check wallet permissions.'
+        } else if (error.message.includes('insufficient funds') || error.message.includes('0x1')) {
+          errorMessage = 'Product creation failed: Insufficient SOL for transaction fees.'
+        } else if (error.message.includes('User rejected') || error.message.includes('rejected')) {
+          errorMessage = 'Transaction was cancelled by user.'
+        } else if (error.message.includes('timeout') || error.message.includes('network')) {
+          errorMessage = 'Product creation failed: Network timeout. Please check your connection and try again.'
+        } else {
+          errorMessage = `Product creation failed: ${error.message}`
+        }
+      }
+      
+      toast.error(errorMessage)
+    },
   })
 }
 
