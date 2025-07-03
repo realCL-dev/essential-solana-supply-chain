@@ -49,19 +49,7 @@ export function MobileWalletProvider({
   // Configure wallet adapters with mobile optimization
   const wallets = useMemo(() => {
     if (!mounted) return [] // Return empty array until mounted
-    return [
-      // Phantom - Most popular mobile wallet
-      new PhantomWalletAdapter(),
-      
-      // Solflare - Good mobile support
-      new SolflareWalletAdapter(),
-      
-      // Backpack - xNFT support
-      new BackpackWalletAdapter(),
-      
-      // Trust Wallet - Mobile support
-      new TrustWalletAdapter(),
-    ]
+    return []
   }, [mounted])
 
   if (!mounted) {
@@ -82,9 +70,7 @@ export function MobileWalletProvider({
         wallets={wallets} 
         autoConnect={false} // Don't auto-connect on mobile for better UX
       >
-        <WalletModalProvider>
-          <WalletUiContextProvider>{children}</WalletUiContextProvider>
-        </WalletModalProvider>
+        {children}
       </WalletProvider>
     </ConnectionProvider>
   )
