@@ -737,6 +737,8 @@ function MobileScanEventForm({ productAddress, onClose }: {
     if (!isValid) return
 
     try {
+      // Add 2 second delay to ensure wallet state is stable after QR scanner cleanup
+      await new Promise(resolve => setTimeout(resolve, 2000))
       await logEventMutation.mutateAsync({ productAddress, eventType, description })
       reset()
       onClose()
