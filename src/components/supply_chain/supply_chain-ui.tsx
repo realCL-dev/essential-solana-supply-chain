@@ -1,4 +1,4 @@
-import { ellipsify } from '@wallet-ui/react'
+import { ellipsify, useWalletUi } from '@wallet-ui/react'
 import {
   useProductAccountsQuery,
   useInitializeProductMutation,
