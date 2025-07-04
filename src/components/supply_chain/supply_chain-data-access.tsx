@@ -136,7 +136,7 @@ export function useLogEventMutation() {
       const [eventAccountPDA] = await getProgramDerivedAddress({
         programAddress: programId,
         seeds: [
-          getBytesEncoder().encode(new Uint8Array([101, 118, 101, 110, 116])), // "event"
+          getBytesEncoder().encode(new TextEncoder().encode("event")),
           getAddressEncoder().encode(productAddress),
           getU64Encoder().encode(productAccount.data.eventsCounter), // events_counter as u64 little-endian
         ],
@@ -299,7 +299,7 @@ export function useProductEventsQuery(productAddress: Address) {
           const [eventPDA] = await getProgramDerivedAddress({
             programAddress: programId,
             seeds: [
-              getBytesEncoder().encode(new Uint8Array([101, 118, 101, 110, 116])), // "event"
+              getBytesEncoder().encode(new TextEncoder().encode("event")),
               getAddressEncoder().encode(productAddress),
               getU64Encoder().encode(BigInt(i)), // event index as u64
             ],
