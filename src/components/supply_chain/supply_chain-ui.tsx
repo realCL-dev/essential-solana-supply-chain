@@ -753,16 +753,6 @@ function MobileScanEventForm({ productAddress, onClose }: {
     }
 
     try {
-      // Add 2 second delay to ensure wallet state is stable after QR scanner cleanup
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Double-check wallet connection after delay
-      if (!account) {
-        console.error('Wallet disconnected during operation')
-        alert('Wallet disconnected. Please reconnect and try again.')
-        return
-      }
-      
       await logEventMutation.mutateAsync({ productAddress, eventType, description })
       reset()
       onClose()
