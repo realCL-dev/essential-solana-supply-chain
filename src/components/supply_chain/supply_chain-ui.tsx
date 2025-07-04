@@ -755,42 +755,14 @@ function MobileScanEventForm({ productAddress, onClose }: {
         return
       }
       
-      // Retry mechanism for failed transactions
-      let retries = 3
-      let lastError: Error | null = null
-      
-      while (retries > 0) {
-        try {
-          await logEventMutation.mutateAsync({ productAddress, eventType, description })
-          reset()
-          onClose()
-          return // Success - exit retry loop
-        } catch (error) {
-          lastError = error as Error
-          retries--
-          
-          if (retries > 0) {
-            console.log(`Transaction failed, retrying... (${retries} attempts remaining)`)
-            // Wait 1 second before retry
-            await new Promise(resolve => setTimeout(resolve, 1000))
-            
-            // Check wallet connection before retry
-            if (!account) {
-              console.error('Wallet disconnected during retry')
-              alert('Wallet disconnected. Please reconnect and try again.')
-              return
-            }
-          }
-        }
-      }
-      
-      // If we get here, all retries failed
-      throw lastError
+      await logEventMutation.mutateAsync({ productAddress, eventType, description })
+      reset()
+      onClose()
     } catch (error) {
       console.error('Error logging event:', error)
       // Better error handling for wallet issues
       if (error instanceof Error && error.message.includes('Unexpected error')) {
-        alert('Transaction failed after multiple attempts. Please check your wallet connection and try again.')
+        alert('Transaction failed. Please check your wallet connection and try again.')
       } else if (error instanceof Error) {
         alert(`Transaction failed: ${error.message}`)
       }
