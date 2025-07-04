@@ -19,7 +19,7 @@ export function getSupplyChainProgramId(cluster: SolanaClusterId) {
     case 'solana:devnet':
     case 'solana:testnet':
       // Use the same program ID for all clusters in MVP
-      return address('6saUBRn5SYZfoejFLjjm6wEULiQr3kbopVUdzttVmJmE')
+      return address('87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx')
     case 'solana:mainnet':
     default:
       return SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS

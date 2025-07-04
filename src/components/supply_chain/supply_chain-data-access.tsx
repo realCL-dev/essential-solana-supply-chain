@@ -39,42 +39,44 @@ export function useSupplyChainProgram() {
 
 // Product-related hooks
 export function useInitializeProductMutation() {
-  const { cluster, client } = useWalletUi()
+  const { cluster } = useWalletUi()
   const queryClient = useQueryClient()
   const signer = useWalletUiSigner()
   const signAndSend = useWalletTransactionSignAndSend()
 
   return useMutation({
     mutationFn: async ({ serialNumber, description }: { serialNumber: string; description: string }) => {
-      // Add network debugging for mobile
-      const isMobile = navigator.userAgent.includes('Mobile') || navigator.userAgent.includes('Android') || navigator.userAgent.includes('iPhone')
-      
-      if (isMobile) {
-        try {
-          // Check the actual network cluster
-          const genesisHash = await client.rpc.getGenesisHash().send()
-          console.log('Mobile network check - Genesis hash:', genesisHash)
-          console.log('Expected cluster:', cluster)
-          
-          // Check if wallet has SOL on this network
-          const balance = await client.rpc.getBalance(signer.address).send()
-          console.log('Mobile wallet balance:', balance.value, 'lamports =', Number(balance.value) / 1e9, 'SOL')
-          
-          if (Number(balance.value) === 0) {
-            throw new Error(`Mobile wallet has 0 SOL on ${cluster}. Please fund your wallet or switch to the correct network.`)
-          }
-        } catch (networkError) {
-          console.error('Mobile network check failed:', networkError)
-          throw new Error(`Mobile network issue: ${networkError instanceof Error ? networkError.message : 'Unknown network error'}`)
+      try {
+        console.log('Starting product initialization...')
+        console.log('Serial number:', serialNumber)
+        console.log('Description:', description)
+        console.log('Signer address:', signer.address)
+        
+        
+        console.log('Creating instruction...')
+        const instruction = await getInitializeProductInstructionAsync({
+          owner: signer,
+          serialNumber,
+          description,
+        })
+        console.log('Instruction created successfully:', instruction)
+        
+        console.log('Signing and sending transaction...')
+        const result = await signAndSend(instruction, signer)
+        console.log('Transaction completed successfully:', result)
+        return result
+      } catch (error) {
+        console.error('Error in mutationFn:', error)
+        console.error('Error type:', typeof error)
+        console.error('Error constructor:', error?.constructor?.name)
+        
+        if (error instanceof Error) {
+          console.error('Error message:', error.message)
+          console.error('Error stack:', error.stack)
         }
+        
+        throw error
       }
-      
-      const instruction = await getInitializeProductInstructionAsync({
-        owner: signer,
-        serialNumber,
-        description,
-      })
-      return await signAndSend(instruction, signer)
     },
     onSuccess: async (tx) => {
       toastTx(tx)
@@ -92,7 +94,6 @@ export function useInitializeProductMutation() {
     onError: (error) => {
       console.error('Initialize product error:', error)
       let errorMessage = 'Failed to initialize product'
-      let debugInfo = ''
       
       if (error instanceof Error) {
         if (error.message.includes('0x7d6') || error.message.includes('ConstraintSeeds')) {
@@ -108,32 +109,11 @@ export function useInitializeProductMutation() {
         } else {
           errorMessage = `Product creation failed: ${error.message}`
         }
-        debugInfo = error.message
-      } else if (typeof error === 'string') {
-        errorMessage = `Product creation failed: ${error}`
-        debugInfo = error
-      } else if (error && typeof error === 'object') {
-        const errorObj = error as Record<string, unknown>
-        if (errorObj.message && typeof errorObj.message === 'string') {
-          debugInfo = errorObj.message
-          errorMessage = `Product creation failed: ${errorObj.message}`
-        } else if (errorObj.error && typeof errorObj.error === 'string') {
-          debugInfo = errorObj.error
-          errorMessage = `Product creation failed: ${errorObj.error}`
-        } else {
-          debugInfo = JSON.stringify(error)
-          errorMessage = `Product creation failed: Unknown error (check debug info)`
-        }
       } else {
-        debugInfo = `Type: ${typeof error}, Value: ${String(error)}`
-        errorMessage = 'Product creation failed: Unknown error type'
+        errorMessage = 'Product creation failed: Unknown error'
       }
       
-      // Add mobile/browser context
-      const isMobile = navigator.userAgent.includes('Mobile') || navigator.userAgent.includes('Android') || navigator.userAgent.includes('iPhone')
-      const browserInfo = isMobile ? 'Mobile' : 'Desktop'
-      
-      toast.error(`${errorMessage} [${browserInfo}] - Debug: ${debugInfo}`)
+      toast.error(errorMessage)
     },
   })
 }

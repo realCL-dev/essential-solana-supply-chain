@@ -6,11 +6,11 @@ solana_version = "2.2.18"
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-supply_chain = "6saUBRn5SYZfoejFLjjm6wEULiQr3kbopVUdzttVmJmE"
-
 [programs.devnet]
-supply_chain = "6saUBRn5SYZfoejFLjjm6wEULiQr3kbopVUdzttVmJmE"
+supply_chain = "87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx"
+
+[programs.localnet]
+supply_chain = "87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx"
 
 [registry]
 url = "https://api.apr.dev"

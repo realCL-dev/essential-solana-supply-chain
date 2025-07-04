@@ -46,67 +46,27 @@ export function useWalletTransactionSignAndSend() {
 
       assertIsTransactionMessageWithSingleSendingSigner(message)
 
-      // Add mobile-specific error handling
-      try {
-        const signature = await signAndSendTransactionMessageWithSigners(message)
-        return getBase58Decoder().decode(signature)
-      } catch (signError) {
-        // Enhanced mobile error reporting
-        const isMobile = navigator.userAgent.includes('Mobile') || navigator.userAgent.includes('Android') || navigator.userAgent.includes('iPhone')
-        
-        if (isMobile) {
-          // Common mobile wallet issues
-          if (signError instanceof Error) {
-            if (signError.message.includes('User rejected') || signError.message.includes('denied')) {
-              throw new Error('Transaction was cancelled by user on mobile wallet')
-            } else if (signError.message.includes('insufficient funds')) {
-              throw new Error('Insufficient SOL for transaction fees (mobile)')
-            } else if (signError.message.includes('timeout') || signError.message.includes('network')) {
-              throw new Error('Mobile network timeout - please check your connection and try again')
-            } else if (signError.message.includes('blockhash')) {
-              throw new Error('Transaction expired (mobile) - please try again')
-            }
-          }
-          // Deep inspection of mobile error object
-          let mobileErrorMsg = 'Unknown mobile error'
-          
-          if (signError instanceof Error) {
-            mobileErrorMsg = signError.message
-          } else if (signError && typeof signError === 'object') {
-            const errorObj = signError as Record<string, unknown>
-            
-            // Try common error properties
-            const possibleErrorProps = ['message', 'error', 'description', 'reason', 'code', 'name', 'details']
-            let foundError = false
-            
-            for (const prop of possibleErrorProps) {
-              if (errorObj[prop] && typeof errorObj[prop] === 'string') {
-                mobileErrorMsg = `${prop}: ${errorObj[prop]}`
-                foundError = true
-                break
-              }
-            }
-            
-            if (!foundError) {
-              // Show the full object structure for debugging
-              try {
-                const keys = Object.keys(errorObj)
-                const errorStructure = keys.map(key => `${key}: ${typeof errorObj[key]}`).join(', ')
-                mobileErrorMsg = `Object structure: {${errorStructure}} | Full: ${JSON.stringify(signError)}`
-              } catch {
-                mobileErrorMsg = `Complex object error (keys: ${Object.keys(errorObj).join(', ')})`
-              }
-            }
-          } else {
-            mobileErrorMsg = `Type: ${typeof signError}, Value: ${String(signError)}`
-          }
-          
-          throw new Error(`Mobile transaction error: ${mobileErrorMsg}`)
-        }
-        
-        throw signError
-      }
+      const signature = await signAndSendTransactionMessageWithSigners(message)
+      return getBase58Decoder().decode(signature)
     } catch (error) {
+      // Enhanced error logging
+      console.error('Transaction signing error - Full error object:', error)
+      console.error('Transaction signing error - Error type:', typeof error)
+      console.error('Transaction signing error - Error constructor:', error?.constructor?.name)
+      
+      if (error instanceof Error) {
+        console.error('Transaction signing error - Message:', error.message)
+        console.error('Transaction signing error - Stack:', error.stack)
+        console.error('Transaction signing error - Cause:', error.cause)
+      }
+      
+      // Try to extract more details from the error
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>
+        console.error('Transaction signing error - Object keys:', Object.keys(errorObj))
+        console.error('Transaction signing error - Full object:', JSON.stringify(errorObj, null, 2))
+      }
+      
       // Top-level error handling
       if (error instanceof Error) {
         throw new Error(`Error processing the transaction: ${error.message}`)

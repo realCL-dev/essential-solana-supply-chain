@@ -3,7 +3,7 @@
 // lib.rs - Supply Chain MVP
 use anchor_lang::prelude::*;
 
-declare_id!("6saUBRn5SYZfoejFLjjm6wEULiQr3kbopVUdzttVmJmE");
+declare_id!("87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx");
 
 /// Supply Chain MVP Program
 #[program]
