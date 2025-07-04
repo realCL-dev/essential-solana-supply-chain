@@ -14,9 +14,18 @@ import {
 } from 'gill'
 
 export function useWalletTransactionSignAndSend() {
-  const { client } = useWalletUi()
+  const { client, account } = useWalletUi()
 
   return async (ix: IInstruction, signer: TransactionSendingSigner) => {
+    // Validate wallet connection before proceeding
+    if (!account) {
+      throw new Error('Wallet not connected. Please connect your wallet and try again.')
+    }
+
+    if (!signer) {
+      throw new Error('Transaction signer not available. Please check your wallet connection.')
+    }
+
     try {
       // Get latest blockhash with retry for mobile networks
       let latestBlockhash: { blockhash: Blockhash; lastValidBlockHeight: bigint } | undefined

@@ -731,19 +731,69 @@ function MobileScanEventForm({ productAddress, onClose }: {
   const { eventType, setEventType, description, setDescription, reset, isValid } = useLogEventForm()
   const logEventMutation = useLogEventMutation()
   const productQuery = useProductQuery(productAddress)
+  const { account } = useWalletUi()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isValid) return
 
+    // Validate wallet connection before proceeding
+    if (!account) {
+      console.error('Wallet not connected')
+      alert('Please connect your wallet first')
+      return
+    }
+
     try {
       // Add 2 second delay to ensure wallet state is stable after QR scanner cleanup
       await new Promise(resolve => setTimeout(resolve, 2000))
-      await logEventMutation.mutateAsync({ productAddress, eventType, description })
-      reset()
-      onClose()
+      
+      // Double-check wallet connection after delay
+      if (!account) {
+        console.error('Wallet disconnected during operation')
+        alert('Wallet disconnected. Please reconnect and try again.')
+        return
+      }
+      
+      // Retry mechanism for failed transactions
+      let retries = 3
+      let lastError: Error | null = null
+      
+      while (retries > 0) {
+        try {
+          await logEventMutation.mutateAsync({ productAddress, eventType, description })
+          reset()
+          onClose()
+          return // Success - exit retry loop
+        } catch (error) {
+          lastError = error as Error
+          retries--
+          
+          if (retries > 0) {
+            console.log(`Transaction failed, retrying... (${retries} attempts remaining)`)
+            // Wait 1 second before retry
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            
+            // Check wallet connection before retry
+            if (!account) {
+              console.error('Wallet disconnected during retry')
+              alert('Wallet disconnected. Please reconnect and try again.')
+              return
+            }
+          }
+        }
+      }
+      
+      // If we get here, all retries failed
+      throw lastError
     } catch (error) {
       console.error('Error logging event:', error)
+      // Better error handling for wallet issues
+      if (error instanceof Error && error.message.includes('Unexpected error')) {
+        alert('Transaction failed after multiple attempts. Please check your wallet connection and try again.')
+      } else if (error instanceof Error) {
+        alert(`Transaction failed: ${error.message}`)
+      }
     }
   }
 
