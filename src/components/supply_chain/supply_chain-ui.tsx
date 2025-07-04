@@ -746,6 +746,12 @@ function MobileScanEventForm({ productAddress, onClose }: {
       return
     }
 
+    // Check if current wallet is authorized to log events for this product
+    if (productQuery.data && productQuery.data.data.owner !== account.address) {
+      alert(`Only the product owner can log events. Owner: ${productQuery.data.data.owner}, Current wallet: ${account.address}`)
+      return
+    }
+
     try {
       // Add 2 second delay to ensure wallet state is stable after QR scanner cleanup
       await new Promise(resolve => setTimeout(resolve, 2000))
@@ -763,7 +769,9 @@ function MobileScanEventForm({ productAddress, onClose }: {
     } catch (error) {
       console.error('Error logging event:', error)
       // Better error handling for wallet issues
-      if (error instanceof Error && error.message.includes('Unexpected error')) {
+      if (error instanceof Error && error.message.includes('UnauthorizedAccess')) {
+        alert('You are not authorized to log events for this product. Only the product owner can log events.')
+      } else if (error instanceof Error && error.message.includes('Unexpected error')) {
         alert('Transaction failed. Please check your wallet connection and try again.')
       } else if (error instanceof Error) {
         alert(`Transaction failed: ${error.message}`)
@@ -800,6 +808,19 @@ function MobileScanEventForm({ productAddress, onClose }: {
               }`}>
                 {ProductStatus[productQuery.data.data.status]}
               </span>
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Owner: <span className="font-mono">{ellipsify(productQuery.data.data.owner)}</span>
+              {account && productQuery.data.data.owner === account.address && (
+                <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                  You own this product
+                </span>
+              )}
+              {account && productQuery.data.data.owner !== account.address && (
+                <span className="ml-2 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                  Not authorized
+                </span>
+              )}
             </div>
           </div>
         </div>
