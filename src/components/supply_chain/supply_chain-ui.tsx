@@ -24,7 +24,34 @@ import QRCode from 'qrcode'
 import QrScanner from 'qr-scanner'
 import Image from 'next/image'
 
-// Type for Product account data structure
+const QR_CODE_CONFIG = {
+  width: 300,
+  margin: 4,
+  errorCorrectionLevel: 'H' as const,
+  color: {
+    dark: '#000000',
+    light: '#FFFFFF'
+  }
+}
+
+const SCAN_THROTTLE_MS = 300
+const MOBILE_MAX_SCANS_PER_SECOND = 5
+const DESKTOP_MAX_SCANS_PER_SECOND = 10
+
+const INPUT_LIMITS = {
+  SERIAL_NUMBER_MAX_LENGTH: 50,
+  DESCRIPTION_MAX_LENGTH: 200
+}
+
+const VIDEO_CONSTRAINTS = {
+  video: {
+    facingMode: 'environment' as const,
+    width: { min: 640, ideal: 1280, max: 1920 },
+    height: { min: 480, ideal: 720, max: 1080 },
+    aspectRatio: 16/9
+  }
+}
+
 type ProductData = {
   owner: Address
   serialNumber: string
@@ -257,7 +284,7 @@ export function CreateProductForm() {
               onChange={(e) => setSerialNumber(e.target.value)}
               placeholder="Enter unique serial number"
               required
-              maxLength={50}
+              maxLength={INPUT_LIMITS.SERIAL_NUMBER_MAX_LENGTH}
             />
           </div>
           
@@ -269,7 +296,7 @@ export function CreateProductForm() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter product description"
               required
-              maxLength={200}
+              maxLength={INPUT_LIMITS.DESCRIPTION_MAX_LENGTH}
             />
           </div>
           
@@ -337,7 +364,7 @@ function LogEventForm({ productAddress, onSuccess }: { productAddress: Address; 
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Enter event description"
           required
-          maxLength={200}
+          maxLength={INPUT_LIMITS.DESCRIPTION_MAX_LENGTH}
           className="text-gray-900 bg-white"
         />
       </div>
@@ -465,15 +492,7 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
       try {
         // Create a URL that includes the product address for scanning
         const qrData = `${window.location.origin}/supply_chain?scan=${encodeURIComponent(productAddress)}`
-        const dataURL = await QRCode.toDataURL(qrData, {
-          width: 300,
-          margin: 4,
-          errorCorrectionLevel: 'H',
-          color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-          }
-        })
+        const dataURL = await QRCode.toDataURL(qrData, QR_CODE_CONFIG)
         setQrCodeDataURL(dataURL)
       } catch (error) {
         console.error('Error generating QR code:', error)
@@ -569,14 +588,7 @@ export function QRScanner() {
     const videoEl = videoRef.current
     if (videoEl) {
       // Mobile-optimized video constraints
-      const constraints = {
-        video: {
-          facingMode: 'environment',
-          width: { min: 640, ideal: 1280, max: 1920 },
-          height: { min: 480, ideal: 720, max: 1080 },
-          aspectRatio: 16/9
-        }
-      }
+      const constraints = VIDEO_CONSTRAINTS
 
       // Apply mobile-specific constraints
       if (isMobileDevice) {
@@ -593,12 +605,11 @@ export function QRScanner() {
       // Throttled scanning function for mobile performance
       const throttledScanResult = (result: QrScanner.ScanResult) => {
         const currentTime = Date.now()
-        if (currentTime - lastScanTime < 300) { // 300ms throttle
+        if (currentTime - lastScanTime < SCAN_THROTTLE_MS) {
           return
         }
         lastScanTime = currentTime
 
-        console.log('QR Code detected:', result)
         const resultData = result.data
         try {
           const url = new URL(resultData)
@@ -628,7 +639,7 @@ export function QRScanner() {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
           highlightCodeOutline: true,
-          maxScansPerSecond: isMobileDevice ? 5 : 10, // Reduce for mobile performance
+          maxScansPerSecond: isMobileDevice ? MOBILE_MAX_SCANS_PER_SECOND : DESKTOP_MAX_SCANS_PER_SECOND,
           preferredCamera: 'environment'
         }
       )
@@ -842,7 +853,7 @@ function MobileScanEventForm({ productAddress, onClose }: {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Enter event description"
             required
-            maxLength={200}
+            maxLength={INPUT_LIMITS.DESCRIPTION_MAX_LENGTH}
             className="p-3 text-base"
           />
         </div>

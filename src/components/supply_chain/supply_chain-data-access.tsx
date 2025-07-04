@@ -21,6 +21,8 @@ import {
 import type { Address } from 'gill'
 import { getProgramDerivedAddress, getBytesEncoder, getAddressEncoder, getU64Encoder } from 'gill'
 
+const TRANSACTION_PROCESSING_DELAY = 2000
+
 export function useSupplyChainProgramId() {
   return SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS
 }
@@ -47,23 +49,13 @@ export function useInitializeProductMutation() {
   return useMutation({
     mutationFn: async ({ serialNumber, description }: { serialNumber: string; description: string }) => {
       try {
-        console.log('Starting product initialization...')
-        console.log('Serial number:', serialNumber)
-        console.log('Description:', description)
-        console.log('Signer address:', signer.address)
-        
-        
-        console.log('Creating instruction...')
         const instruction = await getInitializeProductInstructionAsync({
           owner: signer,
           serialNumber,
           description,
         })
-        console.log('Instruction created successfully:', instruction)
         
-        console.log('Signing and sending transaction...')
         const result = await signAndSend(instruction, signer)
-        console.log('Transaction completed successfully:', result)
         return result
       } catch (error) {
         console.error('Error in mutationFn:', error)
@@ -82,7 +74,7 @@ export function useInitializeProductMutation() {
       toastTx(tx)
       
       // Wait a bit for the transaction to be fully processed on-chain
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise(resolve => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
       
       // Invalidate multiple related queries
       await Promise.all([
@@ -164,7 +156,7 @@ export function useLogEventMutation() {
       toastTx(tx)
       
       // Wait a bit for the transaction to be fully processed on-chain
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise(resolve => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
       
       // Invalidate both product accounts and events for this specific product
       await Promise.all([

@@ -58,25 +58,8 @@ export function useWalletTransactionSignAndSend() {
       const signature = await signAndSendTransactionMessageWithSigners(message)
       return getBase58Decoder().decode(signature)
     } catch (error) {
-      // Enhanced error logging
-      console.error('Transaction signing error - Full error object:', error)
-      console.error('Transaction signing error - Error type:', typeof error)
-      console.error('Transaction signing error - Error constructor:', error?.constructor?.name)
+      console.error('Transaction signing error:', error)
       
-      if (error instanceof Error) {
-        console.error('Transaction signing error - Message:', error.message)
-        console.error('Transaction signing error - Stack:', error.stack)
-        console.error('Transaction signing error - Cause:', error.cause)
-      }
-      
-      // Try to extract more details from the error
-      if (error && typeof error === 'object') {
-        const errorObj = error as Record<string, unknown>
-        console.error('Transaction signing error - Object keys:', Object.keys(errorObj))
-        console.error('Transaction signing error - Full object:', JSON.stringify(errorObj, null, 2))
-      }
-      
-      // Top-level error handling
       if (error instanceof Error) {
         throw new Error(`Error processing the transaction: ${error.message}`)
       }
