@@ -464,7 +464,7 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
       setIsGenerating(true)
       try {
         // Create a URL that includes the product address for scanning
-        const qrData = `${window.location.origin}/supply_chain?scan=${productAddress}`
+        const qrData = `${window.location.origin}/supply_chain?scan=${encodeURIComponent(productAddress)}`
         const dataURL = await QRCode.toDataURL(qrData, {
           width: 300,
           margin: 4,
@@ -604,7 +604,9 @@ export function QRScanner() {
           const url = new URL(resultData)
           const productAddress = url.searchParams.get('scan')
           if (productAddress) {
-            setScannedProductAddress(productAddress as Address)
+            // Decode the URL-encoded product address
+            const decodedAddress = decodeURIComponent(productAddress)
+            setScannedProductAddress(decodedAddress as Address)
             stopScanning()
           } else {
             setError('Invalid QR code. Please scan a product QR code.')
