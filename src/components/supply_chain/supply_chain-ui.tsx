@@ -487,7 +487,7 @@ function EventsList({ productAddress }: { productAddress: Address }) {
             </div>
             <p className="text-sm mb-1">{event.data.description}</p>
             <p className="text-xs text-gray-500">
-              {new Date(Number(event.data.timestamp) * 1000).toLocaleString()}
+              {new Date(Number(event.data.timestamp) * 1000).toUTCString()}
             </p>
           </div>
         ))}
