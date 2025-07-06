@@ -181,8 +181,8 @@ export async function getInitializeProductInstructionAsync<
           new Uint8Array([112, 114, 111, 100, 117, 99, 116])
         ),
         getAddressEncoder().encode(expectAddress(accounts.owner.value)),
-        getUtf8Encoder().encode(
-          expectSome(args.serialNumber)
+        getBytesEncoder().encode(
+          new TextEncoder().encode(expectSome(args.serialNumber))
         ),
       ],
     });

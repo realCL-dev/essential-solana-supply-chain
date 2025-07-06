@@ -15,7 +15,6 @@ import {
   type Encoder,
 } from 'gill';
 
-/** Product status in the supply chain */
 export enum ProductStatus {
   Created,
   InTransit,

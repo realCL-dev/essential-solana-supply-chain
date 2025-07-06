@@ -1,14 +1,20 @@
-{
+/**
+ * Program IDL in camelCase format in order to be used in JS/TS.
+ *
+ * Note that this is only a type helper and is not the actual IDL. The original
+ * IDL can be found at `target/idl/supply_chain.json`.
+ */
+export type SupplyChain = {
   "address": "87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx",
   "metadata": {
-    "name": "supply_chain_program",
+    "name": "supplyChain",
     "version": "0.1.0",
     "spec": "0.1.0",
     "description": "Created with Anchor"
   },
   "instructions": [
     {
-      "name": "initialize_product",
+      "name": "initializeProduct",
       "discriminator": [
         251,
         245,
@@ -21,7 +27,7 @@
       ],
       "accounts": [
         {
-          "name": "product_account",
+          "name": "productAccount",
           "writable": true,
           "pda": {
             "seeds": [
@@ -43,7 +49,7 @@
               },
               {
                 "kind": "arg",
-                "path": "serial_number"
+                "path": "serialNumber"
               }
             ]
           }
@@ -54,13 +60,13 @@
           "signer": true
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "serial_number",
+          "name": "serialNumber",
           "type": "string"
         },
         {
@@ -70,7 +76,7 @@
       ]
     },
     {
-      "name": "log_event",
+      "name": "logEvent",
       "discriminator": [
         5,
         9,
@@ -83,11 +89,11 @@
       ],
       "accounts": [
         {
-          "name": "product_account",
+          "name": "productAccount",
           "writable": true
         },
         {
-          "name": "event_account",
+          "name": "eventAccount",
           "writable": true,
           "pda": {
             "seeds": [
@@ -103,12 +109,12 @@
               },
               {
                 "kind": "account",
-                "path": "product_account"
+                "path": "productAccount"
               },
               {
                 "kind": "account",
                 "path": "product_account.events_counter",
-                "account": "Product"
+                "account": "product"
               }
             ]
           }
@@ -119,16 +125,16 @@
           "signer": true
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "event_type",
+          "name": "eventType",
           "type": {
             "defined": {
-              "name": "EventType"
+              "name": "eventType"
             }
           }
         },
@@ -139,7 +145,7 @@
       ]
     },
     {
-      "name": "transfer_ownership",
+      "name": "transferOwnership",
       "discriminator": [
         65,
         177,
@@ -152,22 +158,22 @@
       ],
       "accounts": [
         {
-          "name": "product_account",
+          "name": "productAccount",
           "writable": true
         },
         {
-          "name": "current_owner",
+          "name": "currentOwner",
           "writable": true,
           "signer": true
         },
         {
-          "name": "system_program",
+          "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "new_owner",
+          "name": "newOwner",
           "type": "pubkey"
         }
       ]
@@ -175,7 +181,7 @@
   ],
   "accounts": [
     {
-      "name": "Product",
+      "name": "product",
       "discriminator": [
         102,
         76,
@@ -188,7 +194,7 @@
       ]
     },
     {
-      "name": "SupplyChainEvent",
+      "name": "supplyChainEvent",
       "discriminator": [
         211,
         55,
@@ -204,54 +210,54 @@
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidSerialNumber",
-      "msg": "Invalid serial number: must be 1-50 characters"
+      "name": "invalidSerialNumber",
+      "msg": "Invalid serial number: must be 1 to 50 characters"
     },
     {
       "code": 6001,
-      "name": "InvalidDescription",
-      "msg": "Invalid description: must be 1-200 characters"
+      "name": "invalidDescription",
+      "msg": "Invalid Description: must be 1 to 200 characters"
     },
     {
       "code": 6002,
-      "name": "UnauthorizedAccess",
+      "name": "unauthorizedAccess",
       "msg": "Unauthorized access"
     },
     {
       "code": 6003,
-      "name": "CounterOverflow",
-      "msg": "Counter overflow"
+      "name": "counterOverflow",
+      "msg": "Counter Overflow"
     }
   ],
   "types": [
     {
-      "name": "EventType",
+      "name": "eventType",
       "type": {
         "kind": "enum",
         "variants": [
           {
-            "name": "Created"
+            "name": "created"
           },
           {
-            "name": "Shipped"
+            "name": "shipped"
           },
           {
-            "name": "Received"
+            "name": "received"
           },
           {
-            "name": "QualityCheck"
+            "name": "qualityCheck"
           },
           {
-            "name": "Delivered"
+            "name": "delivered"
           },
           {
-            "name": "Other"
+            "name": "other"
           }
         ]
       }
     },
     {
-      "name": "Product",
+      "name": "product",
       "type": {
         "kind": "struct",
         "fields": [
@@ -260,7 +266,7 @@
             "type": "pubkey"
           },
           {
-            "name": "serial_number",
+            "name": "serialNumber",
             "type": "string"
           },
           {
@@ -271,46 +277,46 @@
             "name": "status",
             "type": {
               "defined": {
-                "name": "ProductStatus"
+                "name": "productStatus"
               }
             }
           },
           {
-            "name": "created_at",
+            "name": "createdAt",
             "type": "i64"
           },
           {
-            "name": "events_counter",
+            "name": "eventsCounter",
             "type": "u64"
           }
         ]
       }
     },
     {
-      "name": "ProductStatus",
+      "name": "productStatus",
       "type": {
         "kind": "enum",
         "variants": [
           {
-            "name": "Created"
+            "name": "created"
           },
           {
-            "name": "InTransit"
+            "name": "inTransit"
           },
           {
-            "name": "Received"
+            "name": "received"
           },
           {
-            "name": "Delivered"
+            "name": "delivered"
           },
           {
-            "name": "Transferred"
+            "name": "transferred"
           }
         ]
       }
     },
     {
-      "name": "SupplyChainEvent",
+      "name": "supplyChainEvent",
       "type": {
         "kind": "struct",
         "fields": [
@@ -319,10 +325,10 @@
             "type": "pubkey"
           },
           {
-            "name": "event_type",
+            "name": "eventType",
             "type": {
               "defined": {
-                "name": "EventType"
+                "name": "eventType"
               }
             }
           },
@@ -335,11 +341,11 @@
             "type": "i64"
           },
           {
-            "name": "event_index",
+            "name": "eventIndex",
             "type": "u64"
           }
         ]
       }
     }
   ]
-}
+};

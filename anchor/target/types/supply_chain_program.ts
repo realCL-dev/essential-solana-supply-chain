@@ -12,15 +12,9 @@ export type SupplyChainProgram = {
     "spec": "0.1.0",
     "description": "Created with Anchor"
   },
-  "docs": [
-    "Supply Chain MVP Program"
-  ],
   "instructions": [
     {
       "name": "initializeProduct",
-      "docs": [
-        "Initialize a new product in the supply chain"
-      ],
       "discriminator": [
         251,
         245,
@@ -83,9 +77,6 @@ export type SupplyChainProgram = {
     },
     {
       "name": "logEvent",
-      "docs": [
-        "Log a new event for a product"
-      ],
       "discriminator": [
         5,
         9,
@@ -155,9 +146,6 @@ export type SupplyChainProgram = {
     },
     {
       "name": "transferOwnership",
-      "docs": [
-        "Transfer ownership of a product"
-      ],
       "discriminator": [
         65,
         177,
@@ -244,9 +232,6 @@ export type SupplyChainProgram = {
   "types": [
     {
       "name": "eventType",
-      "docs": [
-        "Types of events in the supply chain"
-      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -273,9 +258,6 @@ export type SupplyChainProgram = {
     },
     {
       "name": "product",
-      "docs": [
-        "Product account data"
-      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -312,9 +294,6 @@ export type SupplyChainProgram = {
     },
     {
       "name": "productStatus",
-      "docs": [
-        "Product status in the supply chain"
-      ],
       "type": {
         "kind": "enum",
         "variants": [
@@ -338,9 +317,6 @@ export type SupplyChainProgram = {
     },
     {
       "name": "supplyChainEvent",
-      "docs": [
-        "Supply chain event data"
-      ],
       "type": {
         "kind": "struct",
         "fields": [

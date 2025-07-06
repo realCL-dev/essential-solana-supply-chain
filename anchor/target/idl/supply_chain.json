@@ -1,7 +1,7 @@
 {
   "address": "87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx",
   "metadata": {
-    "name": "supply_chain_program",
+    "name": "supply_chain",
     "version": "0.1.0",
     "spec": "0.1.0",
     "description": "Created with Anchor"
@@ -205,12 +205,12 @@
     {
       "code": 6000,
       "name": "InvalidSerialNumber",
-      "msg": "Invalid serial number: must be 1-50 characters"
+      "msg": "Invalid serial number: must be 1 to 50 characters"
     },
     {
       "code": 6001,
       "name": "InvalidDescription",
-      "msg": "Invalid description: must be 1-200 characters"
+      "msg": "Invalid Description: must be 1 to 200 characters"
     },
     {
       "code": 6002,
@@ -220,7 +220,7 @@
     {
       "code": 6003,
       "name": "CounterOverflow",
-      "msg": "Counter overflow"
+      "msg": "Counter Overflow"
     }
   ],
   "types": [

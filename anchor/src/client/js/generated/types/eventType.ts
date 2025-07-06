@@ -15,7 +15,6 @@ import {
   type Encoder,
 } from 'gill';
 
-/** Types of events in the supply chain */
 export enum EventType {
   Created,
   Shipped,
