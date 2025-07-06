@@ -229,7 +229,7 @@ export function CreateProductForm() {
       await createProductMutation.mutateAsync({ serialNumber, description })
       reset()
     } catch (error) {
-      setLastError(error)
+      setLastError(error instanceof Error ? error : new Error(String(error)))
       console.error('Error creating product:', error)
       
       if (error instanceof Error) {
