@@ -218,7 +218,7 @@ function ProductCard({ product }: { product: ProductAccount }) {
 export function CreateProductForm() {
   const { serialNumber, setSerialNumber, description, setDescription, reset, isValid } = useCreateProductForm()
   const createProductMutation = useInitializeProductMutation()
-  const [lastError, setLastError] = useState<any>(null)
+  const [lastError, setLastError] = useState<Error | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -550,10 +550,12 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
   return (
     <div className="flex flex-col items-center space-y-3 p-4 bg-gray-50 rounded-lg">
       {qrCodeDataURL && (
-        <img 
+        <Image 
           src={qrCodeDataURL} 
           alt={`QR Code for product ${productAddress}`}
           className="w-48 h-48 border border-gray-200 rounded"
+          width={192}
+          height={192}
         />
       )}
       <p className="text-xs text-gray-600 text-center font-mono break-all">
