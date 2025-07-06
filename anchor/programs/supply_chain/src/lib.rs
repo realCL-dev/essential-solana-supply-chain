@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx");
+declare_id!("AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc");
 
 #[program]
 pub mod supply_chain_program {

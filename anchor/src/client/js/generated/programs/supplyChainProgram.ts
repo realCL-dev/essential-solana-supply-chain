@@ -20,7 +20,7 @@ import {
 } from '../instructions';
 
 export const SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS =
-  '87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx' as Address<'87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx'>;
+  'AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc' as Address<'AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc'>;
 
 export enum SupplyChainProgramAccount {
   Product,
@@ -107,7 +107,7 @@ export function identifySupplyChainProgramInstruction(
 }
 
 export type ParsedSupplyChainProgramInstruction<
-  TProgram extends string = '87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx',
+  TProgram extends string = 'AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc',
 > =
   | ({
       instructionType: SupplyChainProgramInstruction.InitializeProduct;

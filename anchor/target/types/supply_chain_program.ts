@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/supply_chain_program.json`.
  */
 export type SupplyChainProgram = {
-  "address": "87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx",
+  "address": "AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc",
   "metadata": {
     "name": "supplyChainProgram",
     "version": "0.1.0",

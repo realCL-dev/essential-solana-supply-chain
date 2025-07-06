@@ -7,10 +7,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-supply_chain = "87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx"
+supply_chain = "AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc"
 
 [programs.localnet]
-supply_chain = "87Uuewo7TdvRdHjbNhb2pVnF3vjFi64XPmT8Ty8mzyzx"
+supply_chain = "AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc"
 
 [registry]
 url = "https://api.apr.dev"
