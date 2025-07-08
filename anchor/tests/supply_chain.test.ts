@@ -1,45 +1,43 @@
-import { address, createSolanaClient, signTransactionMessageWithSigners, createTransaction, KeyPairSigner } from 'gill'
-import { loadKeypairSignerFromFile } from 'gill/node'
-import { buildTransferTokensTransaction, TOKEN_PROGRAM_ADDRESS } from 'gill/programs/token'
 import {
-  getInitializeProductInstruction,
-  getInitializeProductInstructionAsync,
-} from '../src/client/js/generated/instructions/initializeProduct'
-import { before } from 'node:test'
+  createSolanaClient,
+  signTransactionMessageWithSigners,
+  createTransaction,
+  KeyPairSigner,
+  getProgramDerivedAddress,
+  getAddressEncoder,
+} from 'gill'
+import { loadKeypairSignerFromFile } from 'gill/node'
+import { getInitializeProductInstructionAsync } from '../src/client/js/generated/instructions/initializeProduct'
+import { SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS } from '../src/client/js/generated/programs'
+import { fetchProduct } from '../src/client/js/generated/accounts'
 
 describe('supply_chain', () => {
   // TODO: Implement tests for the supply_chain program based on the Codama generated client.
   // Use tests in `legacy/legacy-next-tailwind-supply_chain/anchor/tests/supply_chain.test.ts` as a reference.
 
   const { rpc, sendAndConfirmTransaction } = createSolanaClient({
-    urlOrMoniker: 'devnet',
+    urlOrMoniker: 'localnet',
   })
+
   let signer: KeyPairSigner | undefined = undefined
 
   beforeAll(async () => {
     signer = await loadKeypairSignerFromFile()
 
-    // const { value: latestBlockhash } = await rpc.getLatestBlockhash().send()
-
-    // const mint = address('HwxZNMkZbZMeiu9Xnmc6Rg8jYgNsJB47jwabHGUebW4F')
-    // const tokenProgram = TOKEN_PROGRAM_ADDRESS // use the correct program for the `mint`
-
-    // const destination = address('7sZoCrE3cGgEpNgxcPnGffDeWfTewKnk6wWdLxmYA7Cy')
-
-    console.table([
-      {
-        id: 'signer',
-        address: signer?.address,
-      },
-    ])
+    // console.table([
+    //   {
+    //     id: 'signer',
+    //     address: signer?.address,
+    //   },
+    // ])
   })
 
-  it('Initialize SupplyChain', async () => {
+  it('Initialize Product', async () => {
     expect(signer).not.toBe(undefined)
 
     if (signer) {
-      const serialNumber = '!23'
-      const description = 'My Product'
+      const serialNumber = '12345'
+      const description = 'Test Product'
       const initProduct = await getInitializeProductInstructionAsync({
         owner: signer,
         serialNumber,
@@ -54,15 +52,44 @@ describe('supply_chain', () => {
         instructions: [initProduct],
         latestBlockhash,
       })
-      console.log('Transaction:')
-      console.log(tx)
 
       /**
        * Sign the transaction with the provided `signer` when it was created
        */
       const signedTransaction = await signTransactionMessageWithSigners(tx)
-      console.log('Transaction:')
-      console.log(signedTransaction)
+
+      /**
+       * Aend and wait for execution
+       */
+      await sendAndConfirmTransaction(signedTransaction, {
+        commitment: 'confirmed',
+      })
+
+      /**
+       * Get the PDA adress for the product
+       */
+      const [supplyChainAddress, bump] = await getProgramDerivedAddress({
+        programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
+        seeds: ['product', getAddressEncoder().encode(signer.address), serialNumber],
+      })
+
+      /**
+       * Fetch product and compare to expected values
+       */
+
+      const productAccount = await fetchProduct(rpc, supplyChainAddress)
+      const product = productAccount.data
+
+      expect(product).toMatchObject({
+        owner: signer.address,
+        serialNumber,
+        description,
+        status: 0,
+        eventsCounter: 0n,
+      })
+      const now = BigInt(Math.floor(Date.now() / 1000))
+      expect(product.createdAt).toBeLessThanOrEqual(now)
+      expect(product.createdAt - now).toBeLessThanOrEqual(1) // Expect to be within 1 sec
     }
   })
 
