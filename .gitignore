@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# anchor
+/anchor/target/debug
+/anchor/target/deploy
+/anchor/target/release
+/anchor/target/sbf-solana-solana
+/anchor/target/test-ledger
+/anchor/target/.rustc_info.json
+/anchor/target/sbpf-solana-solana
