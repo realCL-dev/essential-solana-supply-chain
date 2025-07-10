@@ -43,14 +43,6 @@ const INPUT_LIMITS = {
   DESCRIPTION_MAX_LENGTH: 200
 }
 
-const VIDEO_CONSTRAINTS = {
-  video: {
-    facingMode: 'environment' as const,
-    width: { min: 640, ideal: 1280, max: 1920 },
-    height: { min: 480, ideal: 720, max: 1080 },
-    aspectRatio: 16/9
-  }
-}
 
 type ProductData = {
   owner: Address
@@ -593,7 +585,7 @@ export function QRScanner() {
   useEffect(() => {
     const checkMobile = () => {
       const userAgent = navigator.userAgent || navigator.vendor || (window as Window & typeof globalThis & { opera?: string }).opera || ''
-      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
+      return /android|webos|iphone|ipad|ipod|iemobile|opera mini/i.test(userAgent.toLowerCase())
     }
     setIsMobileDevice(checkMobile())
   }, [])
@@ -608,25 +600,14 @@ export function QRScanner() {
 
     const videoEl = videoRef.current
     if (videoEl) {
-      if (isMobileDevice) {
-        navigator.mediaDevices.getUserMedia(VIDEO_CONSTRAINTS)
-          .then(stream => {
-            videoEl.srcObject = stream
-          })
-          .catch(err => {
-            console.error('Mobile camera setup error:', err)
-            setError('Failed to access camera. Please ensure camera permissions are granted.')
-          })
-      }
-
-      const throttledScanResult = (result: QrScanner.ScanResult) => {
+      const throttledScanResult = (result: string | { data: string }) => {
         const currentTime = Date.now()
         if (currentTime - lastScanTime < SCAN_THROTTLE_MS) {
           return
         }
         lastScanTime = currentTime
 
-        const resultData = result.data
+        const resultData = typeof result === 'string' ? result : result.data
         try {
           const url = new URL(resultData)
           const productAddress = url.searchParams.get('scan')
@@ -661,17 +642,42 @@ export function QRScanner() {
 
       qrScanner.start().catch((err) => {
         console.error('Camera error:', err)
+        console.error('Mobile device:', isMobileDevice)
+        console.error('User agent:', navigator.userAgent)
+        
         let errorMessage = 'Camera error: '
         
         if (err instanceof Error) {
           if (err.name === 'NotAllowedError') {
-            errorMessage += 'Camera permission denied. Please allow camera access and try again.'
+            errorMessage += isMobileDevice 
+              ? 'Camera permission denied. Please go to your browser settings and allow camera access for this site, then refresh the page.'
+              : 'Camera permission denied. Please allow camera access and try again.'
           } else if (err.name === 'NotFoundError') {
             errorMessage += 'No camera found. Please ensure your device has a camera.'
           } else if (err.name === 'NotSupportedError') {
-            errorMessage += 'Camera not supported. Please use HTTPS or try a different browser.'
+            errorMessage += isMobileDevice
+              ? 'Camera not supported. Please ensure you are using HTTPS and try opening this app in Phantom mobile or Brave browser.'
+              : 'Camera not supported. Please use HTTPS or try a different browser.'
           } else if (err.name === 'NotReadableError') {
-            errorMessage += 'Camera is being used by another application.'
+            errorMessage += isMobileDevice
+              ? 'Camera is busy. Please close other apps that might be using the camera and try again.'
+              : 'Camera is being used by another application.'
+          } else if (err.name === 'OverconstrainedError') {
+            errorMessage += 'Camera configuration not supported. Trying with default settings...'
+            // Retry with basic configuration for mobile
+            if (isMobileDevice) {
+              setTimeout(() => {
+                const basicScanner = new QrScanner(videoEl, throttledScanResult, {
+                  preferredCamera: 'environment',
+                  maxScansPerSecond: 3
+                })
+                basicScanner.start().catch(retryErr => {
+                  console.error('Retry failed:', retryErr)
+                  setError('Camera failed to start even with basic settings.')
+                })
+              }, 1000)
+              return
+            }
           } else {
             errorMessage += err.message
           }
@@ -709,8 +715,45 @@ export function QRScanner() {
         <div className="text-center space-y-4">
           <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg">
             <p className="text-gray-600 mb-4">Scan a product QR code to log events</p>
-            <Button onClick={() => {
+            {isMobileDevice && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 text-sm">
+                  <strong>Mobile Tips:</strong> Ensure camera permissions are enabled and hold your device steady when scanning.
+                </p>
+              </div>
+            )}
+            <Button onClick={async () => {
               setError('')
+              
+              // Check camera permissions on mobile before starting
+              if (isMobileDevice) {
+                try {
+                  console.log('Checking mobile camera permissions...')
+                  const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                  })
+                  // Release the stream immediately - QrScanner will create its own
+                  stream.getTracks().forEach(track => track.stop())
+                  console.log('Mobile camera permission granted')
+                } catch (err) {
+                  console.error('Mobile camera permission check failed:', err)
+                  if (err instanceof Error) {
+                    if (err.name === 'NotAllowedError') {
+                      setError('Camera permission required. Please allow camera access in your browser settings and refresh the page.')
+                      return
+                    } else if (err.name === 'NotFoundError') {
+                      setError('No camera found on this device.')
+                      return
+                    } else if (err.name === 'NotSupportedError') {
+                      setError('Camera not supported. Please ensure you are using HTTPS and try a wallet browser like Phantom mobile.')
+                      return
+                    }
+                  }
+                  setError('Failed to access camera. Please check your permissions.')
+                  return
+                }
+              }
+              
               setIsScanning(true)
             }}>
               Start Scanning
