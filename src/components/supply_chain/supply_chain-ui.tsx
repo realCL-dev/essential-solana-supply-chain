@@ -736,11 +736,6 @@ export function QRScanner() {
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-blue-800 text-sm">
                   <strong>Mobile Tips:</strong> Ensure camera permissions are enabled and hold your device steady when scanning.
-                  {isPhantomMobile && (
-                    <span className="block mt-1">
-                      <strong>Phantom Mobile:</strong> If scanning fails, try using the manual input option below.
-                    </span>
-                  )}
                 </p>
               </div>
             )}
@@ -774,18 +769,9 @@ export function QRScanner() {
                   if (err instanceof Error) {
                     if (err.name === 'NotAllowedError') {
                       if (isPhantomMobile) {
-                        setError('Camera access blocked in Phantom mobile. Please try using a regular mobile browser or use the manual input option below.')
-                        // Try to fallback to Phantom deeplink for QR scanning
-                        if (navigator.userAgent.includes('Phantom')) {
-                          console.log('Attempting Phantom deeplink fallback...')
-                          try {
-                            window.location.href = `phantom://scan?redirect=${encodeURIComponent(window.location.href)}`
-                          } catch (deeplinkErr) {
-                            console.error('Deeplink fallback failed:', deeplinkErr)
-                          }
-                        }
+                        setError('Camera access blocked in Phantom mobile. Please use the manual input option below.')
                       } else if (isInAppBrowser) {
-                        setError('Camera access blocked in wallet browser. Please try using a regular mobile browser or use the manual input option below.')
+                        setError('Camera access blocked in wallet browser. Please use the manual input option below.')
                       } else {
                         setError('Camera permission required. Please allow camera access in your browser settings and refresh the page.')
                       }
@@ -795,7 +781,7 @@ export function QRScanner() {
                       return
                     } else if (err.name === 'NotSupportedError') {
                       if (isPhantomMobile || isInAppBrowser) {
-                        setError('Camera not supported in wallet browser. Please try using a regular mobile browser or use the manual input option below.')
+                        setError('Camera not supported in wallet browser. Please use the manual input option below.')
                       } else {
                         setError('Camera not supported. Please ensure you are using HTTPS and try a wallet browser like Phantom mobile.')
                       }
@@ -821,59 +807,32 @@ export function QRScanner() {
           {/* Manual input option for when camera fails */}
           {(isMobileDevice || error) && (
             <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-gray-800 mb-3">Alternative Options</h3>
-              
-              {/* Phantom deeplink option */}
-              {isPhantomMobile && (
-                <div className="mb-4">
-                  <p className="text-xs text-gray-600 mb-2">
-                    Try using Phantom&apos;s built-in QR scanner:
-                  </p>
-                  <Button
-                    onClick={() => {
-                      try {
-                        console.log('Attempting Phantom deeplink...')
-                        window.location.href = `phantom://scan?redirect=${encodeURIComponent(window.location.href)}`
-                      } catch (err) {
-                        console.error('Deeplink failed:', err)
-                        setError('Unable to open Phantom scanner. Please use manual input instead.')
-                      }
-                    }}
-                    className="text-sm mb-2 w-full"
-                  >
-                    Open Phantom QR Scanner
-                  </Button>
-                </div>
-              )}
-              
-              {/* Manual input */}
-              <div>
-                <p className="text-xs text-gray-600 mb-3">
-                  Or enter the product address manually:
-                </p>
-                <div className="flex flex-col space-y-2">
-                  <input
-                    type="text"
-                    placeholder="Enter product address (32-44 characters)"
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={manualAddress}
-                    onChange={(e) => setManualAddress(e.target.value)}
-                  />
-                  <Button
-                    onClick={() => {
-                      if (manualAddress.length >= 32 && manualAddress.length <= 44) {
-                        setScannedProductAddress(manualAddress as Address)
-                        setManualAddress('')
-                      } else {
-                        setError('Please enter a valid product address (32-44 characters)')
-                      }
-                    }}
-                    disabled={!manualAddress.trim()}
-                    className="text-sm"
-                  >
-                    Use Manual Address
-                  </Button>
-                </div>
+              <h3 className="text-sm font-semibold text-gray-800 mb-3">Manual Input</h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Enter the product address manually:
+              </p>
+              <div className="flex flex-col space-y-2">
+                <input
+                  type="text"
+                  placeholder="Enter product address (32-44 characters)"
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={manualAddress}
+                  onChange={(e) => setManualAddress(e.target.value)}
+                />
+                <Button
+                  onClick={() => {
+                    if (manualAddress.length >= 32 && manualAddress.length <= 44) {
+                      setScannedProductAddress(manualAddress as Address)
+                      setManualAddress('')
+                    } else {
+                      setError('Please enter a valid product address (32-44 characters)')
+                    }
+                  }}
+                  disabled={!manualAddress.trim()}
+                  className="text-sm"
+                >
+                  Use Manual Address
+                </Button>
               </div>
             </div>
           )}
