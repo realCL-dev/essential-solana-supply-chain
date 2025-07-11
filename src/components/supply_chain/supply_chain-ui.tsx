@@ -583,7 +583,7 @@ export function QRScanner() {
     scanningTimeoutRef.current = setTimeout(() => {
       setIsScanning(false);
       scanningTimeoutRef.current = null;
-    }, 1000); // Increased delay to 1000ms
+    }, 3000); // Increased delay to 3000ms
   }, []);
 
   useEffect(() => {
