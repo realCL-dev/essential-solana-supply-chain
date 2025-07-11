@@ -678,6 +678,14 @@ export function QRScanner() {
         }
       }
 
+      // Enhanced QR scanner configuration for Phantom browser
+      const maxScansPerSecond = (isPhantomMobile || isInAppBrowser) ? 3 : 
+        (isMobileDevice ? MOBILE_MAX_SCANS_PER_SECOND : DESKTOP_MAX_SCANS_PER_SECOND)
+      
+      if (isPhantomMobile || isInAppBrowser) {
+        console.log('Using Phantom-optimized scanner configuration')
+      }
+
       qrScanner = new QrScanner(
         videoEl,
         throttledScanResult,
@@ -685,7 +693,7 @@ export function QRScanner() {
           returnDetailedScanResult: true,
           highlightScanRegion: true,
           highlightCodeOutline: true,
-          maxScansPerSecond: isMobileDevice ? MOBILE_MAX_SCANS_PER_SECOND : DESKTOP_MAX_SCANS_PER_SECOND,
+          maxScansPerSecond,
           preferredCamera: 'environment'
         }
       )
@@ -746,7 +754,7 @@ export function QRScanner() {
         clearTimeout(scanningTimeoutRef.current)
       }
     }
-  }, [isScanning, stopScanning, isMobileDevice])
+  }, [isScanning, stopScanning, isMobileDevice, isPhantomMobile, isInAppBrowser])
 
   if (scannedProductAddress) {
     return (
@@ -767,9 +775,21 @@ export function QRScanner() {
             <p className="text-gray-600 mb-4">Scan a product QR code to log events</p>
             {isMobileDevice && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-blue-800 text-sm">
-                  <strong>Mobile Tips:</strong> Ensure camera permissions are enabled and hold your device steady when scanning.
-                </p>
+                {isPhantomMobile || isInAppBrowser ? (
+                  <div className="text-blue-800 text-sm">
+                    <p className="font-semibold mb-2">🔷 Phantom Browser Tips:</p>
+                    <ul className="text-xs space-y-1">
+                      <li>• When prompted, tap <strong>&quot;Allow&quot;</strong> for camera access</li>
+                      <li>• Look for a camera icon in the address bar if permissions fail</li>
+                      <li>• Hold your device steady and ensure good lighting</li>
+                      <li>• If camera fails, use the manual input option below</li>
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-blue-800 text-sm">
+                    <strong>Mobile Tips:</strong> Ensure camera permissions are enabled and hold your device steady when scanning.
+                  </p>
+                )}
               </div>
             )}
             <Button onClick={async () => {
@@ -782,13 +802,32 @@ export function QRScanner() {
                   
                   // Special handling for Phantom mobile browser
                   if (isPhantomMobile || isInAppBrowser) {
-                    console.log('Detected in-app browser, using alternative permission check...')
-                    // Try a more permissive approach for in-app browsers
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                      video: true // More permissive for in-app browsers
-                    })
-                    stream.getTracks().forEach(track => track.stop())
-                    console.log('In-app browser camera permission granted')
+                    console.log('Detected Phantom/in-app browser, using optimized permission check...')
+                    // Progressive camera permission check for in-app browsers
+                    try {
+                      // First try with back camera
+                      const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                          facingMode: 'environment',
+                          width: { ideal: 1280 },
+                          height: { ideal: 720 }
+                        }
+                      })
+                      stream.getTracks().forEach(track => track.stop())
+                      console.log('Phantom browser camera permission granted (back camera)')
+                    } catch {
+                      console.log('Back camera failed, trying front camera...')
+                      // Fallback to front camera
+                      const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                          facingMode: 'user',
+                          width: { ideal: 640 },
+                          height: { ideal: 480 }
+                        }
+                      })
+                      stream.getTracks().forEach(track => track.stop())
+                      console.log('Phantom browser camera permission granted (front camera)')
+                    }
                   } else {
                     // Standard mobile browser permission check
                     const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -802,9 +841,9 @@ export function QRScanner() {
                   if (err instanceof Error) {
                     if (err.name === 'NotAllowedError') {
                       if (isPhantomMobile) {
-                        setError('Camera access blocked in Phantom mobile. Please use the manual input option below.')
+                        setError('📱 Camera access denied in Phantom. Tap the address bar and look for a camera icon to allow access, or use manual input below.')
                       } else if (isInAppBrowser) {
-                        setError('Camera access blocked in wallet browser. Please use the manual input option below.')
+                        setError('📱 Camera access denied in wallet browser. Please check browser permissions or use manual input below.')
                       } else {
                         setError('Camera permission required. Please allow camera access in your browser settings and refresh the page.')
                       }
@@ -814,7 +853,7 @@ export function QRScanner() {
                       return
                     } else if (err.name === 'NotSupportedError') {
                       if (isPhantomMobile || isInAppBrowser) {
-                        setError('Camera not supported in wallet browser. Please use the manual input option below.')
+                        setError('📱 Camera not supported in this browser. Please use the manual input option below.')
                       } else {
                         setError('Camera not supported. Please ensure you are using HTTPS and try a wallet browser like Phantom mobile.')
                       }
@@ -897,9 +936,18 @@ export function QRScanner() {
           </div>
           {isMobileDevice && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 text-sm text-center">
-                <strong>Tip:</strong> Hold your device steady and ensure the QR code is well-lit for best results.
-              </p>
+              {isPhantomMobile || isInAppBrowser ? (
+                <div className="text-blue-800 text-sm text-center">
+                  <p className="font-semibold mb-1">🔷 Phantom Scanning</p>
+                  <p className="text-xs">
+                    Hold steady • Ensure good lighting • QR code should fill the viewfinder
+                  </p>
+                </div>
+              ) : (
+                <p className="text-blue-800 text-sm text-center">
+                  <strong>Tip:</strong> Hold your device steady and ensure the QR code is well-lit for best results.
+                </p>
+              )}
             </div>
           )}
         </div>
