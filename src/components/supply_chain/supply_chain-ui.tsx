@@ -497,7 +497,23 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
     const generateQRCode = async () => {
       setIsGenerating(true)
       try {
-        const qrData = `${window.location.origin}/supply_chain?scan=${encodeURIComponent(productAddress)}`
+        const targetUrl = `${window.location.origin}/supply_chain?scan=${encodeURIComponent(productAddress)}`
+        const refUrl = window.location.origin
+        
+        // Check if user is on mobile device
+        const isMobile = /android|webos|iphone|ipad|ipod|iemobile|opera mini/i.test(
+          navigator.userAgent.toLowerCase()
+        )
+        
+        let qrData: string
+        if (isMobile) {
+          // Generate Phantom deeplink for mobile users
+          qrData = `https://phantom.app/ul/browse/${encodeURIComponent(targetUrl)}?ref=${encodeURIComponent(refUrl)}`
+        } else {
+          // Use regular URL for desktop users
+          qrData = targetUrl
+        }
+        
         const dataURL = await QRCode.toDataURL(qrData, QR_CODE_CONFIG)
         setQrCodeDataURL(dataURL)
         setError('')
@@ -539,6 +555,10 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
     )
   }
 
+  const isMobile = /android|webos|iphone|ipad|ipod|iemobile|opera mini/i.test(
+    navigator.userAgent.toLowerCase()
+  )
+
   return (
     <div className="flex flex-col items-center space-y-3 p-4 bg-gray-50 rounded-lg">
       {qrCodeDataURL && (
@@ -550,6 +570,19 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
           height={192}
         />
       )}
+      
+      {/* Mobile-specific guidance */}
+      {isMobile && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 max-w-xs">
+          <p className="text-sm text-blue-800 font-medium mb-1">📱 Mobile Users:</p>
+          <p className="text-xs text-blue-700">
+            1. Open your <strong>Phantom wallet</strong><br/>
+            2. Tap the <strong>QR scanner</strong> icon<br/>
+            3. Scan this QR code to open in Phantom&apos;s browser
+          </p>
+        </div>
+      )}
+      
       <p className="text-xs text-gray-600 text-center font-mono break-all">
         Product: {productAddress}
       </p>
@@ -587,17 +620,17 @@ export function QRScanner() {
 
   useEffect(() => {
     const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as Window & typeof globalThis & { opera?: string }).opera || ''
+      const userAgent = navigator.userAgent || ''
       return /android|webos|iphone|ipad|ipod|iemobile|opera mini/i.test(userAgent.toLowerCase())
     }
     
     const checkPhantomMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as Window & typeof globalThis & { opera?: string }).opera || ''
+      const userAgent = navigator.userAgent || ''
       return userAgent.toLowerCase().includes('phantom')
     }
     
     const checkInAppBrowser = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as Window & typeof globalThis & { opera?: string }).opera || ''
+      const userAgent = navigator.userAgent || ''
       // Common in-app browser patterns
       return /wv|webview|inappbrowser|phantom|metamask|trustwallet|coinbase/i.test(userAgent.toLowerCase())
     }
