@@ -609,55 +609,35 @@ export function QRScanner() {
   }, [])
 
   useEffect(() => {
-    if (!isScanning) {
-      return
-    }
+    let qrScanner: QrScanner | null = null;
 
-    let qrScanner: QrScanner | null = null
-    let lastScanTime = 0
-
-    const videoEl = videoRef.current
-    if (videoEl) {
-      const throttledScanResult = (result: string | { data: string }) => {
-        const currentTime = Date.now()
-        if (currentTime - lastScanTime < SCAN_THROTTLE_MS) {
-          return
-        }
-        lastScanTime = currentTime
-
-        const resultData = typeof result === 'string' ? result : result.data
-        try {
-          const url = new URL(resultData)
-          const productAddress = url.searchParams.get('scan')
-          if (productAddress) {
-            const decodedAddress = decodeURIComponent(productAddress)
-            setScannedProductAddress(decodedAddress as Address)
-            stopScanning()
-          } else {
-            setError('Invalid QR code. Please scan a product QR code.')
+    if (isScanning) {
+      const videoEl = videoRef.current;
+      if (videoEl) {
+        const throttledScanResult = (result: string | { data: string }) => {
+          const resultData = typeof result === 'string' ? result : result.data;
+          console.log('Scan successful:', resultData);
+          try {
+            const url = new URL(resultData);
+            const productAddress = url.searchParams.get('scan');
+            if (productAddress) {
+              const decodedAddress = decodeURIComponent(productAddress);
+              setScannedProductAddress(decodedAddress as Address);
+              stopScanning();
+            } else {
+              setError('Invalid QR code. Please scan a product QR code.');
+            }
+          } catch {
+            if (resultData.length >= 32 && resultData.length <= 44) {
+              setScannedProductAddress(resultData as Address);
+              stopScanning();
+            } else {
+              setError('Invalid QR code format.');
+            }
           }
-        } catch {
-          if (resultData.length >= 32 && resultData.length <= 44) {
-            setScannedProductAddress(resultData as Address)
-            stopScanning()
-          } else {
-            setError('Invalid QR code format.')
-          }
-        }
-      }
+        };
 
-      // Enhanced QR scanner configuration for Phantom browser
-      const maxScansPerSecond = (isPhantomMobile || isInAppBrowser) ? 3 : 
-        (isMobileDevice ? MOBILE_MAX_SCANS_PER_SECOND : DESKTOP_MAX_SCANS_PER_SECOND)
-      
-      if (isPhantomMobile || isInAppBrowser) {
-        console.log('Using Phantom-optimized scanner configuration')
-      }
-
-      qrScanner = new QrScanner(
-        videoEl,
-        throttledScanResult,
-        {
+        const scannerOptions: QrScanner.Options = {
           onDecodeError: (error) => {
             console.error('QR Scanner decoding error:', error);
             setError('Failed to decode QR code. Please try again.');
@@ -665,68 +645,24 @@ export function QRScanner() {
           returnDetailedScanResult: true,
           highlightScanRegion: !isMobileDevice,
           highlightCodeOutline: !isMobileDevice,
-          maxScansPerSecond,
-          preferredCamera: 'environment'
-        }
-      )
+          maxScansPerSecond: isMobileDevice ? 2 : 10,
+          preferredCamera: 'environment',
+        };
 
-      qrScanner.start().catch((err) => {
-        console.error('Camera error:', err)
-        console.error('Mobile device:', isMobileDevice)
-        console.error('User agent:', navigator.userAgent)
-        
-        let errorMessage = 'Camera error: '
-        
-        if (err instanceof Error) {
-          if (err.name === 'NotAllowedError') {
-            errorMessage += isMobileDevice 
-              ? 'Camera permission denied. Please go to your browser settings and allow camera access for this site, then refresh the page.'
-              : 'Camera permission denied. Please allow camera access and try again.'
-          } else if (err.name === 'NotFoundError') {
-            errorMessage += 'No camera found. Please ensure your device has a camera.'
-          } else if (err.name === 'NotSupportedError') {
-            errorMessage += isMobileDevice
-              ? 'Camera not supported. Please ensure you are using HTTPS and try opening this app in Phantom mobile or Brave browser.'
-              : 'Camera not supported. Please use HTTPS or try a different browser.'
-          } else if (err.name === 'NotReadableError') {
-            errorMessage += isMobileDevice
-              ? 'Camera is busy. Please close other apps that might be using the camera and try again.'
-              : 'Camera is being used by another application.'
-          } else if (err.name === 'OverconstrainedError') {
-            errorMessage += 'Camera configuration not supported. Trying with default settings...'
-            // Retry with basic configuration for mobile
-            if (isMobileDevice) {
-              setTimeout(() => {
-                const basicScanner = new QrScanner(videoEl, throttledScanResult, {
-                  preferredCamera: 'environment',
-                  maxScansPerSecond: 3
-                })
-                basicScanner.start().catch(retryErr => {
-                  console.error('Retry failed:', retryErr)
-                  setError('Camera failed to start even with basic settings.')
-                })
-              }, 1000)
-              return
-            }
-          } else {
-            errorMessage += err.message
-          }
-        } else {
-          errorMessage += 'Unknown error occurred. Please try again.'
-        }
-        
-        setError(errorMessage)
-        stopScanning()
-      })
+        qrScanner = new QrScanner(videoEl, throttledScanResult, scannerOptions);
+
+        qrScanner.start().catch((err) => {
+          console.error('Camera error:', err);
+          setError(`Camera error: ${err.message}`);
+          stopScanning();
+        });
+      }
     }
 
     return () => {
-      qrScanner?.destroy()
-      if (scanningTimeoutRef.current) {
-        clearTimeout(scanningTimeoutRef.current)
-      }
-    }
-  }, [isScanning, stopScanning, isMobileDevice, isPhantomMobile, isInAppBrowser])
+      qrScanner?.destroy();
+    };
+  }, [isScanning, stopScanning, isMobileDevice]);
 
   if (scannedProductAddress) {
     return (
