@@ -688,8 +688,6 @@ export function QRScanner() {
                     <p className="font-semibold mb-2">🔷 Phantom Browser Tips:</p>
                     <ul className="text-xs space-y-1">
                       <li>• When prompted, tap <strong>&quot;Allow&quot;</strong> for camera access</li>
-                      <li>• Look for a camera icon in the address bar if permissions fail</li>
-                      <li>• Hold your device steady and ensure good lighting</li>
                       <li>• If camera fails, use the manual input option below</li>
                     </ul>
                   </div>
@@ -700,81 +698,9 @@ export function QRScanner() {
                 )}
               </div>
             )}
-            <Button onClick={async () => {
-              setError('')
-              console.log(`Starting scan. isMobileDevice: ${isMobileDevice}, isPhantomMobile: ${isPhantomMobile}, isInAppBrowser: ${isInAppBrowser}`);
-              
-              // Check camera permissions on mobile before starting
-              if (isMobileDevice) {
-                try {
-                  console.log('Checking mobile camera permissions...')
-                  
-                  // Special handling for Phantom mobile browser
-                  if (isPhantomMobile || isInAppBrowser) {
-                    console.log('Detected Phantom/in-app browser, using optimized permission check...')
-                    // Progressive camera permission check for in-app browsers
-                    try {
-                      // First try with back camera
-                      const stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { 
-                          facingMode: 'environment',
-                          width: { ideal: 1280 },
-                          height: { ideal: 720 }
-                        }
-                      })
-                      stream.getTracks().forEach(track => track.stop())
-                      console.log('Phantom browser camera permission granted (back camera)')
-                    } catch {
-                      console.log('Back camera failed, trying front camera...')
-                      // Fallback to front camera
-                      const stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { 
-                          facingMode: 'user',
-                          width: { ideal: 640 },
-                          height: { ideal: 480 }
-                        }
-                      })
-                      stream.getTracks().forEach(track => track.stop())
-                      console.log('Phantom browser camera permission granted (front camera)')
-                    }
-                  } else {
-                    // Standard mobile browser permission check
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                      video: { facingMode: 'environment' } 
-                    })
-                    stream.getTracks().forEach(track => track.stop())
-                    console.log('Mobile camera permission granted')
-                  }
-                } catch (err) {
-                  console.error('Mobile camera permission check failed:', err)
-                  if (err instanceof Error) {
-                    if (err.name === 'NotAllowedError') {
-                      if (isPhantomMobile) {
-                        setError('📱 Camera access denied in Phantom. Tap the address bar and look for a camera icon to allow access, or use manual input below.')
-                      } else if (isInAppBrowser) {
-                        setError('📱 Camera access denied in wallet browser. Please check browser permissions or use manual input below.')
-                      } else {
-                        setError('Camera permission required. Please allow camera access in your browser settings and refresh the page.')
-                      }
-                      return
-                    } else if (err.name === 'NotFoundError') {
-                      setError('No camera found on this device.')
-                      return
-                    } else if (err.name === 'NotSupportedError') {
-                      if (isPhantomMobile || isInAppBrowser) {
-                        setError('📱 Camera not supported in this browser. Please use the manual input option below.')
-                      } else {
-                        setError('Camera not supported. Please ensure you are using HTTPS and try a wallet browser like Phantom mobile.')
-                      }
-                      return
-                    }
-                  }
-                  setError('Failed to access camera. Please check your permissions.')
-                  return
-                }
-              }
-              
-              setIsScanning(true)
+            <Button onClick={() => {
+              setError('');
+              setIsScanning(true);
             }}>
               Start Scanning
             </Button>
