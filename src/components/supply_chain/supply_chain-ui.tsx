@@ -34,9 +34,7 @@ const QR_CODE_CONFIG = {
   }
 }
 
-const SCAN_THROTTLE_MS = 300
-const MOBILE_MAX_SCANS_PER_SECOND = 5
-const DESKTOP_MAX_SCANS_PER_SECOND = 10
+
 
 const INPUT_LIMITS = {
   SERIAL_NUMBER_MAX_LENGTH: 50,
@@ -637,7 +635,10 @@ export function QRScanner() {
           }
         };
 
-        const scannerOptions: QrScanner.Options = {
+        qrScanner = new QrScanner(
+        videoEl,
+        throttledScanResult,
+        {
           onDecodeError: (error) => {
             console.error('QR Scanner decoding error:', error);
             setError('Failed to decode QR code. Please try again.');
@@ -646,10 +647,9 @@ export function QRScanner() {
           highlightScanRegion: !isMobileDevice,
           highlightCodeOutline: !isMobileDevice,
           maxScansPerSecond: isMobileDevice ? 2 : 10,
-          preferredCamera: 'environment',
-        };
-
-        qrScanner = new QrScanner(videoEl, throttledScanResult, scannerOptions);
+          preferredCamera: 'environment'
+        }
+      );
 
         qrScanner.start().catch((err) => {
           console.error('Camera error:', err);
