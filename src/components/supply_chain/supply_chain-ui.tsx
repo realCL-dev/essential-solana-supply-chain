@@ -577,12 +577,14 @@ export function QRScanner() {
   const scanningTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const stopScanning = useCallback(() => {
-    setIsScanning(false)
     if (scanningTimeoutRef.current) {
-      clearTimeout(scanningTimeoutRef.current)
-      scanningTimeoutRef.current = null
+      clearTimeout(scanningTimeoutRef.current);
     }
-  }, [])
+    scanningTimeoutRef.current = setTimeout(() => {
+      setIsScanning(false);
+      scanningTimeoutRef.current = null;
+    }, 1000); // Increased delay to 1000ms
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => {

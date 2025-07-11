@@ -202,6 +202,7 @@ export function useProductAccountsQuery() {
 
   return useQuery({
     queryKey: useProductAccountsQueryKey(),
+    refetchInterval: 5000, // Refetch every 5 seconds
     
     queryFn: async () => {
       try {
@@ -265,6 +266,7 @@ export function useProductQuery(address: Address) {
     queryKey: ['supply_chain', 'product', address],
     queryFn: async () => await fetchProduct(client.rpc, address),
     enabled: !!address,
+    refetchInterval: 5000, // Refetch every 5 seconds
   })
 }
 
@@ -274,6 +276,7 @@ export function useProductEventsQuery(productAddress: Address) {
 
   return useQuery({
     queryKey: ['supply_chain', 'events', productAddress],
+    refetchInterval: 5000, // Refetch every 5 seconds
     
     queryFn: async () => {
       try {
