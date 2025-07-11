@@ -658,9 +658,13 @@ export function QRScanner() {
         videoEl,
         throttledScanResult,
         {
+          onDecodeError: (error) => {
+            console.error('QR Scanner decoding error:', error);
+            setError('Failed to decode QR code. Please try again.');
+          },
           returnDetailedScanResult: true,
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
+          highlightScanRegion: !isMobileDevice,
+          highlightCodeOutline: !isMobileDevice,
           maxScansPerSecond,
           preferredCamera: 'environment'
         }
@@ -762,6 +766,7 @@ export function QRScanner() {
             )}
             <Button onClick={async () => {
               setError('')
+              console.log(`Starting scan. isMobileDevice: ${isMobileDevice}, isPhantomMobile: ${isPhantomMobile}, isInAppBrowser: ${isInAppBrowser}`);
               
               // Check camera permissions on mobile before starting
               if (isMobileDevice) {
