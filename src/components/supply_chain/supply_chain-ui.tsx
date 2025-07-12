@@ -575,10 +575,16 @@ export function QRScanner() {
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const scanningTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasSuccessfulScanRef = useRef<boolean>(false)
 
   const stopScanning = useCallback(() => {
     if (scanningTimeoutRef.current) {
       clearTimeout(scanningTimeoutRef.current);
+    }
+    if (errorTimeoutRef.current) {
+      clearTimeout(errorTimeoutRef.current);
+      errorTimeoutRef.current = null;
     }
     scanningTimeoutRef.current = setTimeout(() => {
       setIsScanning(false);
@@ -612,11 +618,24 @@ export function QRScanner() {
     let qrScanner: QrScanner | null = null;
 
     if (isScanning) {
+      // Reset success flag and clear any errors when starting a new scan
+      hasSuccessfulScanRef.current = false;
+      setError('');
+      
       const videoEl = videoRef.current;
       if (videoEl) {
         const throttledScanResult = (result: string | { data: string }) => {
           const resultData = typeof result === 'string' ? result : result.data;
           console.log('Scan successful:', resultData);
+          
+          // Clear any pending error timeouts and existing errors on successful scan
+          if (errorTimeoutRef.current) {
+            clearTimeout(errorTimeoutRef.current);
+            errorTimeoutRef.current = null;
+          }
+          setError('');
+          hasSuccessfulScanRef.current = true;
+          
           try {
             const url = new URL(resultData);
             const productAddress = url.searchParams.get('scan');
@@ -643,7 +662,22 @@ export function QRScanner() {
         {
           onDecodeError: (error) => {
             console.error('QR Scanner decoding error:', error);
-            setError('Failed to decode QR code. Please try again.');
+            
+            // Only show error if no successful scan has occurred and after a delay
+            if (!hasSuccessfulScanRef.current) {
+              // Clear any existing error timeout
+              if (errorTimeoutRef.current) {
+                clearTimeout(errorTimeoutRef.current);
+              }
+              
+              // Set a timeout to show error only if scanning continues to fail
+              errorTimeoutRef.current = setTimeout(() => {
+                if (!hasSuccessfulScanRef.current) {
+                  setError('Failed to decode QR code. Please try again.');
+                }
+                errorTimeoutRef.current = null;
+              }, 5000); // Wait 5 seconds before showing error
+            }
           },
           returnDetailedScanResult: true,
           highlightScanRegion: !isMobileDevice,
@@ -663,6 +697,10 @@ export function QRScanner() {
 
     return () => {
       qrScanner?.destroy();
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+        errorTimeoutRef.current = null;
+      }
     };
   }, [isScanning, stopScanning, isMobileDevice]);
 
