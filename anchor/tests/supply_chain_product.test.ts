@@ -5,41 +5,49 @@ import {
   KeyPairSigner,
   getProgramDerivedAddress,
   getAddressEncoder,
+  generateKeyPairSigner,
+  LAMPORTS_PER_SOL,
+  lamports,
+  airdropFactory,
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
 } from 'gill'
-import { loadKeypairSignerFromFile } from 'gill/node'
 import { getInitializeProductInstructionAsync } from '../src/client/js/generated/instructions/initializeProduct'
 import { SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS } from '../src/client/js/generated/programs'
 import { fetchProduct } from '../src/client/js/generated/accounts'
 
 describe('supply_chain', () => {
-  // TODO: Implement tests for the supply_chain program based on the Codama generated client.
-  // Use tests in `legacy/legacy-next-tailwind-supply_chain/anchor/tests/supply_chain.test.ts` as a reference.
-
   const { rpc, sendAndConfirmTransaction } = createSolanaClient({
     urlOrMoniker: 'localnet',
   })
 
-  let signer: KeyPairSigner | undefined = undefined
+  let owner1: KeyPairSigner | undefined = undefined
 
   beforeAll(async () => {
-    signer = await loadKeypairSignerFromFile()
+    // Generate multiple keypairs for testing
+    owner1 = await generateKeyPairSigner()
 
-    // console.table([
-    //   {
-    //     id: 'signer',
-    //     address: signer?.address,
-    //   },
-    // ])
+    const rpc = createSolanaRpc('http://localhost:8899')
+    const rpcSubscriptions = createSolanaRpcSubscriptions('ws://localhost:8900')
+
+    // Get some initial airdrop for transaction funding
+    await Promise.all([
+      airdropFactory({ rpc, rpcSubscriptions })({
+        recipientAddress: owner1.address,
+        lamports: lamports(BigInt(LAMPORTS_PER_SOL * 6)),
+        commitment: 'confirmed',
+      }),
+    ])
   })
 
   it('Initialize Product', async () => {
-    expect(signer).not.toBe(undefined)
+    expect(owner1).not.toBe(undefined)
 
-    if (signer) {
+    if (owner1) {
       const serialNumber = '12345'
       const description = 'Test Product'
       const initProduct = await getInitializeProductInstructionAsync({
-        owner: signer,
+        owner: owner1,
         serialNumber,
         description,
       })
@@ -48,13 +56,13 @@ describe('supply_chain', () => {
 
       const tx = createTransaction({
         version: 'legacy',
-        feePayer: signer,
+        feePayer: owner1,
         instructions: [initProduct],
         latestBlockhash,
       })
 
       /**
-       * Sign the transaction with the provided `signer` when it was created
+       * Sign the transaction with the provided `owner1`
        */
       const signedTransaction = await signTransactionMessageWithSigners(tx)
 
@@ -70,7 +78,7 @@ describe('supply_chain', () => {
        */
       const [supplyChainAddress] = await getProgramDerivedAddress({
         programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-        seeds: ['product', getAddressEncoder().encode(signer.address), serialNumber],
+        seeds: ['product', getAddressEncoder().encode(owner1.address), serialNumber],
       })
 
       /**
@@ -81,7 +89,7 @@ describe('supply_chain', () => {
       const product = productAccount.data
 
       expect(product).toMatchObject({
-        owner: signer.address,
+        owner: owner1.address,
         serialNumber,
         description,
         status: 0,
@@ -91,21 +99,5 @@ describe('supply_chain', () => {
       expect(product.createdAt).toBeLessThanOrEqual(now)
       expect(product.createdAt - now).toBeLessThanOrEqual(1) // Expect to be within 1 sec
     }
-  })
-
-  it.skip('Increment SupplyChain Again', async () => {
-    expect(true).toBe(true)
-  })
-
-  it.skip('Decrement SupplyChain', async () => {
-    expect(true).toBe(true)
-  })
-
-  it.skip('Set supply_chain value', async () => {
-    expect(true).toBe(true)
-  })
-
-  it.skip('Set close the supply_chain account', async () => {
-    expect(true).toBe(true)
   })
 })
