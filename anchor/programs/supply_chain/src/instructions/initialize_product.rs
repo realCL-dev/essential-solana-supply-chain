@@ -28,6 +28,7 @@ pub fn process_initialize_product(
     ctx: Context<InitializeProduct>,
     serial_number: String,
     description: String,
+    stages: Option<Vec<Stage>>,
 ) -> Result<()> {
     let product_account = &mut ctx.accounts.product_account;
     let clock = Clock::get()?;
@@ -42,11 +43,30 @@ pub fn process_initialize_product(
         SupplyChainError::InvalidDescription
     );
 
+    if let Some(stages) = stages {
+        require!(
+            stages.len() <= Product::MAX_STAGES,
+            SupplyChainError::TooManyStages
+        );
+
+        for stage in &stages {
+            require!(
+                stage.name.len() <= Product::STAGE_NAME_MAX_LEN && !stage.name.is_empty(),
+                SupplyChainError::InvalidStageName
+            );
+        }
+
+        product_account.stages = stages;
+    } else {
+        product_account.stages = Vec::new();
+    }
+
     product_account.owner = ctx.accounts.owner.key();
     product_account.serial_number = serial_number;
     product_account.description = description;
     product_account.status = ProductStatus::Created;
     product_account.created_at = clock.unix_timestamp;
+    product_account.current_stage_index = 0;
     product_account.events_counter = 0;
     Ok(())
 }

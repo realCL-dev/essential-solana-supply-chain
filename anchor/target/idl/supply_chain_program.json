@@ -8,6 +8,35 @@
   },
   "instructions": [
     {
+      "name": "complete_stage",
+      "discriminator": [
+        14,
+        56,
+        73,
+        109,
+        170,
+        85,
+        63,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "product_account",
+          "writable": true
+        },
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "initialize_product",
       "discriminator": [
         251,
@@ -66,6 +95,18 @@
         {
           "name": "description",
           "type": "string"
+        },
+        {
+          "name": "stages",
+          "type": {
+            "option": {
+              "vec": {
+                "defined": {
+                  "name": "Stage"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -125,16 +166,20 @@
       ],
       "args": [
         {
+          "name": "stage_name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
           "name": "event_type",
           "type": {
             "defined": {
               "name": "EventType"
             }
           }
-        },
-        {
-          "name": "description",
-          "type": "string"
         }
       ]
     },
@@ -221,6 +266,31 @@
       "code": 6003,
       "name": "CounterOverflow",
       "msg": "Counter overflow"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidStageName",
+      "msg": "Invalid stage name: must be 1-50 characters"
+    },
+    {
+      "code": 6005,
+      "name": "TooManyStages",
+      "msg": "Too many stages: maximum 10 stages allowed"
+    },
+    {
+      "code": 6006,
+      "name": "NoStages",
+      "msg": "No stages defined"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidStageIndex",
+      "msg": "Invalid stage index"
+    },
+    {
+      "code": 6008,
+      "name": "StageNotCompleted",
+      "msg": "Current stage not completed"
     }
   ],
   "types": [
@@ -230,22 +300,10 @@
         "kind": "enum",
         "variants": [
           {
-            "name": "Created"
+            "name": "Ongoing"
           },
           {
-            "name": "Shipped"
-          },
-          {
-            "name": "Received"
-          },
-          {
-            "name": "QualityCheck"
-          },
-          {
-            "name": "Delivered"
-          },
-          {
-            "name": "Other"
+            "name": "Complete"
           }
         ]
       }
@@ -282,6 +340,20 @@
           {
             "name": "events_counter",
             "type": "u64"
+          },
+          {
+            "name": "stages",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Stage"
+                }
+              }
+            }
+          },
+          {
+            "name": "current_stage_index",
+            "type": "u8"
           }
         ]
       }
@@ -310,6 +382,28 @@
       }
     },
     {
+      "name": "Stage",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "owner",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "completed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
       "name": "SupplyChainEvent",
       "type": {
         "kind": "struct",
@@ -328,6 +422,10 @@
           },
           {
             "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "stage_name",
             "type": "string"
           },
           {

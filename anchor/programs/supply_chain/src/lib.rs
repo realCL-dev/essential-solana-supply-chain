@@ -19,19 +19,25 @@ pub mod supply_chain_program {
         ctx: Context<InitializeProduct>,
         serial_number: String,
         description: String,
+        stages: Option<Vec<Stage>>,
     ) -> Result<()> {
-        process_initialize_product(ctx, serial_number, description)
+        process_initialize_product(ctx, serial_number, description, stages)
     }
 
     pub fn log_event(
         ctx: Context<LogEvent>,
-        event_type: EventType,
+        stage_name: String,
         description: String,
+        event_type: EventType
     ) -> Result<()> {
-        process_log_event(ctx, event_type, description)
+        process_log_event(ctx, stage_name, description, event_type)
     }
 
     pub fn transfer_ownership(ctx: Context<TransferOwnership>, new_owner: Pubkey) -> Result<()> {
         process_transfer_ownership(ctx, new_owner)
+    }
+
+    pub fn complete_stage(ctx: Context<CompleteStage>) -> Result<()> {
+        process_complete_stage(ctx)
     }
 }

@@ -66,6 +66,7 @@ export type SupplyChainEvent = {
   product: Address;
   eventType: EventType;
   description: string;
+  stageName: string;
   timestamp: bigint;
   eventIndex: bigint;
 };
@@ -74,6 +75,7 @@ export type SupplyChainEventArgs = {
   product: Address;
   eventType: EventTypeArgs;
   description: string;
+  stageName: string;
   timestamp: number | bigint;
   eventIndex: number | bigint;
 };
@@ -85,6 +87,7 @@ export function getSupplyChainEventEncoder(): Encoder<SupplyChainEventArgs> {
       ['product', getAddressEncoder()],
       ['eventType', getEventTypeEncoder()],
       ['description', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+      ['stageName', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ['timestamp', getI64Encoder()],
       ['eventIndex', getU64Encoder()],
     ]),
@@ -98,6 +101,7 @@ export function getSupplyChainEventDecoder(): Decoder<SupplyChainEvent> {
     ['product', getAddressDecoder()],
     ['eventType', getEventTypeDecoder()],
     ['description', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    ['stageName', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['timestamp', getI64Decoder()],
     ['eventIndex', getU64Decoder()],
   ]);

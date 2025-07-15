@@ -14,6 +14,7 @@ import {
   type ReadonlyUint8Array,
 } from 'gill';
 import {
+  type ParsedCompleteStageInstruction,
   type ParsedInitializeProductInstruction,
   type ParsedLogEventInstruction,
   type ParsedTransferOwnershipInstruction,
@@ -59,6 +60,7 @@ export function identifySupplyChainProgramAccount(
 }
 
 export enum SupplyChainProgramInstruction {
+  CompleteStage,
   InitializeProduct,
   LogEvent,
   TransferOwnership,
@@ -68,6 +70,17 @@ export function identifySupplyChainProgramInstruction(
   instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
 ): SupplyChainProgramInstruction {
   const data = 'data' in instruction ? instruction.data : instruction;
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([14, 56, 73, 109, 170, 85, 63, 218])
+      ),
+      0
+    )
+  ) {
+    return SupplyChainProgramInstruction.CompleteStage;
+  }
   if (
     containsBytes(
       data,
@@ -109,6 +122,9 @@ export function identifySupplyChainProgramInstruction(
 export type ParsedSupplyChainProgramInstruction<
   TProgram extends string = 'AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc',
 > =
+  | ({
+      instructionType: SupplyChainProgramInstruction.CompleteStage;
+    } & ParsedCompleteStageInstruction<TProgram>)
   | ({
       instructionType: SupplyChainProgramInstruction.InitializeProduct;
     } & ParsedInitializeProductInstruction<TProgram>)

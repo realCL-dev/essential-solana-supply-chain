@@ -7,8 +7,6 @@
  */
 
 import {
-  addDecoderSizePrefix,
-  addEncoderSizePrefix,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -16,10 +14,6 @@ import {
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
-  getUtf8Decoder,
-  getUtf8Encoder,
   transformEncoder,
   type Address,
   type Codec,
@@ -38,25 +32,20 @@ import {
 } from 'gill';
 import { SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
-import {
-  getEventTypeDecoder,
-  getEventTypeEncoder,
-  type EventType,
-  type EventTypeArgs,
-} from '../types';
 
-export const LOG_EVENT_DISCRIMINATOR = new Uint8Array([
-  5, 9, 90, 141, 223, 134, 57, 217,
+export const COMPLETE_STAGE_DISCRIMINATOR = new Uint8Array([
+  14, 56, 73, 109, 170, 85, 63, 218,
 ]);
 
-export function getLogEventDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 8).encode(LOG_EVENT_DISCRIMINATOR);
+export function getCompleteStageDiscriminatorBytes() {
+  return fixEncoderSize(getBytesEncoder(), 8).encode(
+    COMPLETE_STAGE_DISCRIMINATOR
+  );
 }
 
-export type LogEventInstruction<
+export type CompleteStageInstruction<
   TProgram extends string = typeof SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
   TAccountProductAccount extends string | IAccountMeta<string> = string,
-  TAccountEventAccount extends string | IAccountMeta<string> = string,
   TAccountSigner extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
@@ -69,9 +58,6 @@ export type LogEventInstruction<
       TAccountProductAccount extends string
         ? WritableAccount<TAccountProductAccount>
         : TAccountProductAccount,
-      TAccountEventAccount extends string
-        ? WritableAccount<TAccountEventAccount>
-        : TAccountEventAccount,
       TAccountSigner extends string
         ? WritableSignerAccount<TAccountSigner> &
             IAccountSignerMeta<TAccountSigner>
@@ -83,83 +69,60 @@ export type LogEventInstruction<
     ]
   >;
 
-export type LogEventInstructionData = {
+export type CompleteStageInstructionData = {
   discriminator: ReadonlyUint8Array;
-  stageName: string;
-  description: string;
-  eventType: EventType;
 };
 
-export type LogEventInstructionDataArgs = {
-  stageName: string;
-  description: string;
-  eventType: EventTypeArgs;
-};
+export type CompleteStageInstructionDataArgs = {};
 
-export function getLogEventInstructionDataEncoder(): Encoder<LogEventInstructionDataArgs> {
+export function getCompleteStageInstructionDataEncoder(): Encoder<CompleteStageInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([
-      ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['stageName', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-      ['description', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-      ['eventType', getEventTypeEncoder()],
-    ]),
-    (value) => ({ ...value, discriminator: LOG_EVENT_DISCRIMINATOR })
+    getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
+    (value) => ({ ...value, discriminator: COMPLETE_STAGE_DISCRIMINATOR })
   );
 }
 
-export function getLogEventInstructionDataDecoder(): Decoder<LogEventInstructionData> {
+export function getCompleteStageInstructionDataDecoder(): Decoder<CompleteStageInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['stageName', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
-    ['description', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
-    ['eventType', getEventTypeDecoder()],
   ]);
 }
 
-export function getLogEventInstructionDataCodec(): Codec<
-  LogEventInstructionDataArgs,
-  LogEventInstructionData
+export function getCompleteStageInstructionDataCodec(): Codec<
+  CompleteStageInstructionDataArgs,
+  CompleteStageInstructionData
 > {
   return combineCodec(
-    getLogEventInstructionDataEncoder(),
-    getLogEventInstructionDataDecoder()
+    getCompleteStageInstructionDataEncoder(),
+    getCompleteStageInstructionDataDecoder()
   );
 }
 
-export type LogEventInput<
+export type CompleteStageInput<
   TAccountProductAccount extends string = string,
-  TAccountEventAccount extends string = string,
   TAccountSigner extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   productAccount: Address<TAccountProductAccount>;
-  eventAccount: Address<TAccountEventAccount>;
   signer: TransactionSigner<TAccountSigner>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stageName: LogEventInstructionDataArgs['stageName'];
-  description: LogEventInstructionDataArgs['description'];
-  eventType: LogEventInstructionDataArgs['eventType'];
 };
 
-export function getLogEventInstruction<
+export function getCompleteStageInstruction<
   TAccountProductAccount extends string,
-  TAccountEventAccount extends string,
   TAccountSigner extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
 >(
-  input: LogEventInput<
+  input: CompleteStageInput<
     TAccountProductAccount,
-    TAccountEventAccount,
     TAccountSigner,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): LogEventInstruction<
+): CompleteStageInstruction<
   TProgramAddress,
   TAccountProductAccount,
-  TAccountEventAccount,
   TAccountSigner,
   TAccountSystemProgram
 > {
@@ -170,7 +133,6 @@ export function getLogEventInstruction<
   // Original accounts.
   const originalAccounts = {
     productAccount: { value: input.productAccount ?? null, isWritable: true },
-    eventAccount: { value: input.eventAccount ?? null, isWritable: true },
     signer: { value: input.signer ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -178,9 +140,6 @@ export function getLogEventInstruction<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
-
-  // Original args.
-  const args = { ...input };
 
   // Resolve default values.
   if (!accounts.systemProgram.value) {
@@ -192,18 +151,14 @@ export function getLogEventInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.productAccount),
-      getAccountMeta(accounts.eventAccount),
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getLogEventInstructionDataEncoder().encode(
-      args as LogEventInstructionDataArgs
-    ),
-  } as LogEventInstruction<
+    data: getCompleteStageInstructionDataEncoder().encode({}),
+  } as CompleteStageInstruction<
     TProgramAddress,
     TAccountProductAccount,
-    TAccountEventAccount,
     TAccountSigner,
     TAccountSystemProgram
   >;
@@ -211,29 +166,28 @@ export function getLogEventInstruction<
   return instruction;
 }
 
-export type ParsedLogEventInstruction<
+export type ParsedCompleteStageInstruction<
   TProgram extends string = typeof SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     productAccount: TAccountMetas[0];
-    eventAccount: TAccountMetas[1];
-    signer: TAccountMetas[2];
-    systemProgram: TAccountMetas[3];
+    signer: TAccountMetas[1];
+    systemProgram: TAccountMetas[2];
   };
-  data: LogEventInstructionData;
+  data: CompleteStageInstructionData;
 };
 
-export function parseLogEventInstruction<
+export function parseCompleteStageInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedLogEventInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+): ParsedCompleteStageInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -247,10 +201,9 @@ export function parseLogEventInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       productAccount: getNextAccount(),
-      eventAccount: getNextAccount(),
       signer: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getLogEventInstructionDataDecoder().decode(instruction.data),
+    data: getCompleteStageInstructionDataDecoder().decode(instruction.data),
   };
 }

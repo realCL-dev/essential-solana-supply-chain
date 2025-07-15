@@ -13,8 +13,12 @@ import {
   fixDecoderSize,
   fixEncoderSize,
   getAddressEncoder,
+  getArrayDecoder,
+  getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
+  getOptionDecoder,
+  getOptionEncoder,
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
@@ -32,6 +36,8 @@ import {
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
+  type Option,
+  type OptionOrNullable,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
@@ -45,6 +51,12 @@ import {
   getAccountMetaFactory,
   type ResolvedAccount,
 } from '../shared';
+import {
+  getStageDecoder,
+  getStageEncoder,
+  type Stage,
+  type StageArgs,
+} from '../types';
 
 export const INITIALIZE_PRODUCT_DISCRIMINATOR = new Uint8Array([
   251, 245, 7, 123, 247, 50, 14, 2,
@@ -86,11 +98,13 @@ export type InitializeProductInstructionData = {
   discriminator: ReadonlyUint8Array;
   serialNumber: string;
   description: string;
+  stages: Option<Array<Stage>>;
 };
 
 export type InitializeProductInstructionDataArgs = {
   serialNumber: string;
   description: string;
+  stages: OptionOrNullable<Array<StageArgs>>;
 };
 
 export function getInitializeProductInstructionDataEncoder(): Encoder<InitializeProductInstructionDataArgs> {
@@ -99,6 +113,7 @@ export function getInitializeProductInstructionDataEncoder(): Encoder<Initialize
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['serialNumber', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ['description', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+      ['stages', getOptionEncoder(getArrayEncoder(getStageEncoder()))],
     ]),
     (value) => ({ ...value, discriminator: INITIALIZE_PRODUCT_DISCRIMINATOR })
   );
@@ -109,6 +124,7 @@ export function getInitializeProductInstructionDataDecoder(): Decoder<Initialize
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['serialNumber', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['description', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    ['stages', getOptionDecoder(getArrayDecoder(getStageDecoder()))],
   ]);
 }
 
@@ -132,6 +148,7 @@ export type InitializeProductAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   serialNumber: InitializeProductInstructionDataArgs['serialNumber'];
   description: InitializeProductInstructionDataArgs['description'];
+  stages: InitializeProductInstructionDataArgs['stages'];
 };
 
 export async function getInitializeProductInstructionAsync<
@@ -181,7 +198,7 @@ export async function getInitializeProductInstructionAsync<
           new Uint8Array([112, 114, 111, 100, 117, 99, 116])
         ),
         getAddressEncoder().encode(expectAddress(accounts.owner.value)),
-        new TextEncoder().encode(
+        addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()).encode(
           expectSome(args.serialNumber)
         ),
       ],
@@ -223,6 +240,7 @@ export type InitializeProductInput<
   systemProgram?: Address<TAccountSystemProgram>;
   serialNumber: InitializeProductInstructionDataArgs['serialNumber'];
   description: InitializeProductInstructionDataArgs['description'];
+  stages: InitializeProductInstructionDataArgs['stages'];
 };
 
 export function getInitializeProductInstruction<

@@ -16,12 +16,8 @@ import {
 } from 'gill';
 
 export enum EventType {
-  Created,
-  Shipped,
-  Received,
-  QualityCheck,
-  Delivered,
-  Other,
+  Ongoing,
+  Complete,
 }
 
 export type EventTypeArgs = EventType;
