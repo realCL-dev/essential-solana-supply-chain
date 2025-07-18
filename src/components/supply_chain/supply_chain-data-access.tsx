@@ -6,7 +6,7 @@ import { useWalletTransactionSignAndSend } from '../solana/use-wallet-transactio
 import { useClusterVersion } from '@/components/cluster/use-cluster-version'
 import { toastTx } from '@/components/toast-tx'
 import { useWalletUiSigner } from '@/components/solana/use-wallet-ui-signer'
-import { 
+import {
   getInitializeProductInstructionAsync,
   getLogEventInstruction,
   getTransferOwnershipInstruction,
@@ -16,7 +16,7 @@ import {
   SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
   EventType,
   ProductStatus,
-  PRODUCT_DISCRIMINATOR
+  PRODUCT_DISCRIMINATOR,
 } from '@project/anchor'
 import type { Address } from 'gill'
 import { getProgramDerivedAddress, getBytesEncoder, getAddressEncoder, getU64Encoder, getUtf8Encoder } from 'gill'
@@ -50,11 +50,7 @@ export function useInitializeProductMutation() {
       try {
         const [productAccountAddress] = await getProgramDerivedAddress({
           programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-          seeds: [
-            'product',
-            getAddressEncoder().encode(signer.address),
-            getUtf8Encoder().encode(serialNumber),
-          ],
+          seeds: ['product', getAddressEncoder().encode(signer.address), getUtf8Encoder().encode(serialNumber)],
         })
 
         const instruction = await getInitializeProductInstructionAsync({
@@ -62,41 +58,41 @@ export function useInitializeProductMutation() {
           owner: signer,
           serialNumber,
           description,
-          stages:null, // No stages for this mutation
+          stages: null, // No stages for this mutation
         })
-        
+
         const result = await signAndSend(instruction, signer)
         return result
       } catch (error) {
         console.error('Error in mutationFn:', error)
         console.error('Error type:', typeof error)
         console.error('Error constructor:', error?.constructor?.name)
-        
+
         if (error instanceof Error) {
           console.error('Error message:', error.message)
           console.error('Error stack:', error.stack)
         }
-        
+
         throw error
       }
     },
 
     onSuccess: async (tx) => {
       toastTx(tx)
-      
-      await new Promise(resolve => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
-      
+
+      await new Promise((resolve) => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['supply_chain', 'products', { cluster }] }),
         queryClient.invalidateQueries({ queryKey: ['supply_chain'] }),
-        queryClient.refetchQueries({ queryKey: ['supply_chain', 'products', { cluster }] })
+        queryClient.refetchQueries({ queryKey: ['supply_chain', 'products', { cluster }] }),
       ])
     },
 
     onError: (error) => {
       console.error('Initialize product error:', error)
       let errorMessage = 'Failed to initialize product'
-      
+
       if (error instanceof Error) {
         if (error.message.includes('0x7d6') || error.message.includes('ConstraintSeeds')) {
           errorMessage = 'Product creation failed: Invalid account setup. Please try again.'
@@ -114,7 +110,7 @@ export function useInitializeProductMutation() {
       } else {
         errorMessage = 'Product creation failed: Unknown error'
       }
-      
+
       toast.error(errorMessage)
     },
   })
@@ -129,21 +125,21 @@ export function useLogEventMutation() {
   const programId = useSupplyChainProgramId()
 
   return useMutation({
-    mutationFn: async ({ 
-      productAddress, 
-      eventType, 
-      description 
-    }: { 
-      productAddress: Address; 
-      eventType: EventType; 
-      description: string 
+    mutationFn: async ({
+      productAddress,
+      eventType,
+      description,
+    }: {
+      productAddress: Address
+      eventType: EventType
+      description: string
     }) => {
       const productAccount = await fetchProduct(client.rpc, productAddress)
-      
+
       const [eventAccountPDA] = await getProgramDerivedAddress({
         programAddress: programId,
         seeds: [
-          getBytesEncoder().encode(new TextEncoder().encode("event")),
+          getBytesEncoder().encode(new TextEncoder().encode('event')),
           getAddressEncoder().encode(productAddress),
           getU64Encoder().encode(productAccount.data.eventsCounter),
         ],
@@ -156,19 +152,19 @@ export function useLogEventMutation() {
         eventType,
         description,
       })
-      
+
       return { tx: await signAndSend(instruction, signer), productAddress }
     },
 
     onSuccess: async ({ tx, productAddress }) => {
       toastTx(tx)
-      
-      await new Promise(resolve => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
-      
+
+      await new Promise((resolve) => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
+
       await Promise.all([
         invalidateAccounts(),
         queryClient.invalidateQueries({ queryKey: ['supply_chain', 'events', productAddress] }),
-        queryClient.invalidateQueries({ queryKey: ['supply_chain', 'product', productAddress] })
+        queryClient.invalidateQueries({ queryKey: ['supply_chain', 'product', productAddress] }),
       ])
     },
 
@@ -182,19 +178,13 @@ export function useTransferOwnershipMutation() {
   const signer = useWalletUiSigner()
 
   return useMutation({
-    mutationFn: async ({ 
-      productAddress, 
-      newOwner 
-    }: { 
-      productAddress: Address; 
-      newOwner: Address 
-    }) => {
+    mutationFn: async ({ productAddress, newOwner }: { productAddress: Address; newOwner: Address }) => {
       const instruction = getTransferOwnershipInstruction({
         productAccount: productAddress,
         currentOwner: signer,
         newOwner,
       })
-      
+
       return await signAndSend(instruction, signer)
     },
 
@@ -214,22 +204,24 @@ export function useProductAccountsQuery() {
   return useQuery({
     queryKey: useProductAccountsQueryKey(),
     refetchInterval: 5000, // Refetch every 5 seconds
-    
+
     queryFn: async () => {
       try {
-        const programAccounts = await client.rpc.getProgramAccounts(programId, {
-          encoding: 'base64'
-        }).send()
-        
+        const programAccounts = await client.rpc
+          .getProgramAccounts(programId, {
+            encoding: 'base64',
+          })
+          .send()
+
         if (!programAccounts || programAccounts.length === 0) {
           return []
         }
 
         const productAddresses = programAccounts
-          .filter(account => {
+          .filter((account) => {
             const data = account.account.data
             if (!data) return false
-            
+
             let dataBytes: Uint8Array
             if (Array.isArray(data) && data.length === 2 && data[1] === 'base64') {
               try {
@@ -245,17 +237,17 @@ export function useProductAccountsQuery() {
               }
             } else if (data instanceof Uint8Array) {
               dataBytes = data
-            } else if (Array.isArray(data) && data.every(item => typeof item === 'number')) {
+            } else if (Array.isArray(data) && data.every((item) => typeof item === 'number')) {
               dataBytes = new Uint8Array(data as number[])
             } else {
               return false
             }
-            
+
             if (dataBytes.length < 8) return false
-            
+
             return dataBytes.slice(0, 8).every((byte, i) => byte === PRODUCT_DISCRIMINATOR[i])
           })
-          .map(account => account.pubkey)
+          .map((account) => account.pubkey)
 
         if (productAddresses.length === 0) {
           return []
@@ -288,12 +280,12 @@ export function useProductEventsQuery(productAddress: Address) {
   return useQuery({
     queryKey: ['supply_chain', 'events', productAddress],
     refetchInterval: 5000, // Refetch every 5 seconds
-    
+
     queryFn: async () => {
       try {
         const product = await fetchProduct(client.rpc, productAddress)
         const eventsCount = Number(product.data.eventsCounter)
-        
+
         if (eventsCount === 0) {
           return []
         }
@@ -303,7 +295,7 @@ export function useProductEventsQuery(productAddress: Address) {
           const [eventPDA] = await getProgramDerivedAddress({
             programAddress: programId,
             seeds: [
-              getBytesEncoder().encode(new TextEncoder().encode("event")),
+              getBytesEncoder().encode(new TextEncoder().encode('event')),
               getAddressEncoder().encode(productAddress),
               getU64Encoder().encode(BigInt(i)),
             ],
@@ -312,7 +304,7 @@ export function useProductEventsQuery(productAddress: Address) {
         }
 
         const events = await Promise.all(eventPromises)
-        
+
         return events.sort((a, b) => Number(a.data.eventIndex) - Number(b.data.eventIndex))
       } catch (error) {
         console.error('Error fetching events:', error)
@@ -350,7 +342,7 @@ export function useCreateProductForm() {
     description,
     setDescription,
     reset,
-    isValid: serialNumber.trim().length > 0 && description.trim().length > 0
+    isValid: serialNumber.trim().length > 0 && description.trim().length > 0,
   }
 }
 
@@ -369,7 +361,7 @@ export function useLogEventForm() {
     description,
     setDescription,
     reset,
-    isValid: description.trim().length > 0
+    isValid: description.trim().length > 0,
   }
 }
 
@@ -419,7 +411,7 @@ export function useCreateProductWithStagesForm() {
     setUseStages(true)
   }
 
-  const isValidStages = stages.length > 0 && stages.every(stage => stage.name.trim().length > 0)
+  const isValidStages = stages.length > 0 && stages.every((stage) => stage.name.trim().length > 0)
 
   return {
     serialNumber,
@@ -435,7 +427,7 @@ export function useCreateProductWithStagesForm() {
     removeStage,
     loadTemplate,
     reset,
-    isValid: serialNumber.trim().length > 0 && description.trim().length > 0 && (!useStages || isValidStages)
+    isValid: serialNumber.trim().length > 0 && description.trim().length > 0 && (!useStages || isValidStages),
   }
 }
 
@@ -449,29 +441,25 @@ export function useInitializeProductWithStagesMutation() {
   const signAndSend = useWalletTransactionSignAndSend()
 
   return useMutation({
-    mutationFn: async ({ 
-      serialNumber, 
-      description, 
-      stages 
-    }: { 
+    mutationFn: async ({
+      serialNumber,
+      description,
+      stages,
+    }: {
       serialNumber: string
       description: string
-      stages: StageInput[] 
+      stages: StageInput[]
     }) => {
       try {
         const [productAccountAddress] = await getProgramDerivedAddress({
           programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-          seeds: [
-            'product',
-            getAddressEncoder().encode(signer.address),
-            getUtf8Encoder().encode(serialNumber),
-          ],
+          seeds: ['product', getAddressEncoder().encode(signer.address), getUtf8Encoder().encode(serialNumber)],
         })
 
-        const mappedStages = stages.map(stage => ({
+        const mappedStages = stages.map((stage) => ({
           name: stage.name,
-          owner: stage.wallet && stage.wallet.trim() !== '' ? stage.wallet as Address : null,
-          completed: false
+          owner: stage.wallet && stage.wallet.trim() !== '' ? (stage.wallet as Address) : null,
+          completed: false,
         }))
 
         const instruction = await getInitializeProductInstructionAsync({
@@ -479,41 +467,41 @@ export function useInitializeProductWithStagesMutation() {
           owner: signer,
           serialNumber,
           description,
-          stages: mappedStages
+          stages: mappedStages,
         })
-        
+
         const result = await signAndSend(instruction, signer)
         return result
       } catch (error) {
         console.error('Error in mutationFn:', error)
         console.error('Error type:', typeof error)
         console.error('Error constructor:', error?.constructor?.name)
-        
+
         if (error instanceof Error) {
           console.error('Error message:', error.message)
           console.error('Error stack:', error.stack)
         }
-        
+
         throw error
       }
     },
 
     onSuccess: async (tx) => {
       toastTx(tx)
-      
-      await new Promise(resolve => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
-      
+
+      await new Promise((resolve) => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['supply_chain', 'products', { cluster }] }),
         queryClient.invalidateQueries({ queryKey: ['supply_chain'] }),
-        queryClient.refetchQueries({ queryKey: ['supply_chain', 'products', { cluster }] })
+        queryClient.refetchQueries({ queryKey: ['supply_chain', 'products', { cluster }] }),
       ])
     },
 
     onError: (error) => {
       console.error('Initialize product error:', error)
       let errorMessage = 'Failed to initialize product'
-      
+
       if (error instanceof Error) {
         if (error.message.includes('0x7d6') || error.message.includes('ConstraintSeeds')) {
           errorMessage = 'Product creation failed: Invalid account setup. Please try again.'
@@ -531,7 +519,7 @@ export function useInitializeProductWithStagesMutation() {
       } else {
         errorMessage = 'Product creation failed: Unknown error'
       }
-      
+
       toast.error(errorMessage)
     },
   })

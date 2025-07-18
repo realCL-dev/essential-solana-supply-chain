@@ -3,11 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input, TextArea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState } from 'react'
-import { 
-  useCreateProductWithStagesForm, 
+import {
+  useCreateProductWithStagesForm,
   useInitializeProductMutation,
   useInitializeProductWithStagesMutation,
-  type StageInput 
+  type StageInput,
 } from './supply_chain-data-access'
 import { ExplorerLink } from '../cluster/cluster-ui'
 import { ellipsify } from '@wallet-ui/react'
@@ -15,7 +15,7 @@ import { ellipsify } from '@wallet-ui/react'
 const INPUT_LIMITS = {
   SERIAL_NUMBER_MAX_LENGTH: 50,
   DESCRIPTION_MAX_LENGTH: 200,
-  STAGE_NAME_MAX_LENGTH: 50
+  STAGE_NAME_MAX_LENGTH: 50,
 }
 
 export function EnhancedCreateProductForm() {
@@ -27,15 +27,13 @@ export function EnhancedCreateProductForm() {
     setSerialNumber,
     description,
     setDescription,
-    useStages,
-    setUseStages,
     stages,
     addStage,
     updateStage,
     removeStage,
     loadTemplate,
     reset,
-    isValid
+    isValid,
   } = useCreateProductWithStagesForm()
 
   const createProductMutation = useInitializeProductMutation()
@@ -50,20 +48,20 @@ export function EnhancedCreateProductForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isValid) return
-    
+
     try {
       setLastError(null)
-      
+
       if (creationMode === 'freeform') {
         await createProductMutation.mutateAsync({ serialNumber, description })
       } else if (creationMode === 'stages') {
-        await createProductWithStagesMutation.mutateAsync({ 
-          serialNumber, 
-          description, 
-          stages 
+        await createProductWithStagesMutation.mutateAsync({
+          serialNumber,
+          description,
+          stages,
         })
       }
-      
+
       reset()
       setCreationMode('choose')
     } catch (error) {
@@ -77,19 +75,19 @@ export function EnhancedCreateProductForm() {
       <Card>
         <CardHeader>
           <CardTitle>Create New Product</CardTitle>
-          <CardDescription>
-            Choose how you want to create and track your product
-          </CardDescription>
+          <CardDescription>Choose how you want to create and track your product</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="cursor-pointer hover:bg-gray-50 hover:text-accent transition-colors" 
-                  onClick={() => setCreationMode('freeform')}>
+            <Card
+              className="cursor-pointer hover:bg-gray-50 hover:text-accent transition-colors"
+              onClick={() => setCreationMode('freeform')}
+            >
               <CardHeader>
                 <CardTitle className="text-lg">Free Form Tracking</CardTitle>
                 <CardDescription>
-                  Create a product and manually log events as they happen. 
-                  You have full control over event types and timing.
+                  Create a product and manually log events as they happen. You have full control over event types and
+                  timing.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -97,13 +95,14 @@ export function EnhancedCreateProductForm() {
               </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:bg-gray-50 hover:text-accent transition-colors" 
-                  onClick={() => setCreationMode('stages')}>
+            <Card
+              className="cursor-pointer hover:bg-gray-50 hover:text-accent transition-colors"
+              onClick={() => setCreationMode('stages')}
+            >
               <CardHeader>
                 <CardTitle className="text-lg">Staged Tracking</CardTitle>
                 <CardDescription>
-                  Define chronological stages with automatic ownership transfer. 
-                  Perfect for supply chain workflows.
+                  Define chronological stages with automatic ownership transfer. Perfect for supply chain workflows.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -121,14 +120,11 @@ export function EnhancedCreateProductForm() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>
-              Create New Product - {creationMode === 'freeform' ? 'Free Form' : 'Staged Tracking'}
-            </CardTitle>
+            <CardTitle>Create New Product - {creationMode === 'freeform' ? 'Free Form' : 'Staged Tracking'}</CardTitle>
             <CardDescription>
-              {creationMode === 'freeform' 
+              {creationMode === 'freeform'
                 ? 'Register a new product for manual event tracking'
-                : 'Register a new product with predefined stages and automated ownership transfer'
-              }
+                : 'Register a new product with predefined stages and automated ownership transfer'}
             </CardDescription>
           </div>
           <Button onClick={handleBackToChoice} variant="outline" size="sm">
@@ -178,15 +174,14 @@ export function EnhancedCreateProductForm() {
             />
           )}
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={!isValid || createProductMutation.isPending || createProductWithStagesMutation.isPending}
             className="w-full"
           >
-            {createProductMutation.isPending || createProductWithStagesMutation.isPending 
-              ? 'Creating Product...' 
-              : `Create ${creationMode === 'freeform' ? 'Free Form' : 'Staged'} Product`
-            }
+            {createProductMutation.isPending || createProductWithStagesMutation.isPending
+              ? 'Creating Product...'
+              : `Create ${creationMode === 'freeform' ? 'Free Form' : 'Staged'} Product`}
           </Button>
 
           {lastError && process.env.NODE_ENV === 'development' && (
@@ -195,9 +190,7 @@ export function EnhancedCreateProductForm() {
                 <summary className="cursor-pointer font-medium text-red-800">
                   Debug Information (Development Only)
                 </summary>
-                <pre className="mt-2 text-red-700 overflow-auto">
-                  {JSON.stringify(lastError, null, 2)}
-                </pre>
+                <pre className="mt-2 text-red-700 overflow-auto">{JSON.stringify(lastError, null, 2)}</pre>
               </details>
             </div>
           )}
@@ -212,7 +205,7 @@ function StageConfiguration({
   onAddStage,
   onUpdateStage,
   onRemoveStage,
-  onLoadTemplate
+  onLoadTemplate,
 }: {
   stages: StageInput[]
   onAddStage: () => void
@@ -225,20 +218,10 @@ function StageConfiguration({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Stage Configuration</h3>
         <div className="space-x-2">
-          <Button 
-            type="button" 
-            onClick={onLoadTemplate} 
-            variant="outline" 
-            size="sm"
-          >
+          <Button type="button" onClick={onLoadTemplate} variant="outline" size="sm">
             Load Template
           </Button>
-          <Button 
-            type="button" 
-            onClick={onAddStage} 
-            variant="outline" 
-            size="sm"
-          >
+          <Button type="button" onClick={onAddStage} variant="outline" size="sm">
             Add Stage
           </Button>
         </div>
@@ -286,9 +269,7 @@ function StageConfiguration({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`stage-wallet-${index}`}>
-                  Wallet Address (Optional)
-                </Label>
+                <Label htmlFor={`stage-wallet-${index}`}>Wallet Address (Optional)</Label>
                 <Input
                   id={`stage-wallet-${index}`}
                   value={stage.wallet || ''}
@@ -297,10 +278,7 @@ function StageConfiguration({
                 />
                 {stage.wallet && (
                   <p className="text-xs text-gray-600">
-                    <ExplorerLink 
-                      address={stage.wallet} 
-                      label={ellipsify(stage.wallet)}
-                    />
+                    <ExplorerLink address={stage.wallet} label={ellipsify(stage.wallet)} />
                   </p>
                 )}
               </div>
@@ -308,8 +286,8 @@ function StageConfiguration({
             {stage.wallet && (
               <div className="p-2 bg-blue-50 border border-blue-200 rounded text-sm">
                 <p className="text-blue-800">
-                  <strong>Auto-transfer:</strong> When this stage is completed, 
-                  ownership will automatically transfer to the specified wallet.
+                  <strong>Auto-transfer:</strong> When this stage is completed, ownership will automatically transfer to
+                  the specified wallet.
                 </p>
               </div>
             )}
@@ -326,9 +304,7 @@ function StageConfiguration({
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
                   {stage.name || `Stage ${index + 1}`}
                 </span>
-                {index < stages.length - 1 && (
-                  <span className="mx-2 text-gray-400">→</span>
-                )}
+                {index < stages.length - 1 && <span className="mx-2 text-gray-400">→</span>}
               </div>
             ))}
           </div>

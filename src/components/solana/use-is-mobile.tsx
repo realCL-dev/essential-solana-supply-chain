@@ -8,7 +8,11 @@ export function useIsMobile() {
   useEffect(() => {
     const checkMobile = () => {
       if (typeof navigator === 'undefined') return false
-      const userAgent = navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor || (window as unknown as { opera?: string }).opera || ''
+      const userAgent =
+        navigator.userAgent ||
+        (navigator as unknown as { vendor?: string }).vendor ||
+        (window as unknown as { opera?: string }).opera ||
+        ''
       return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(String(userAgent).toLowerCase())
     }
     setIsMobile(checkMobile())

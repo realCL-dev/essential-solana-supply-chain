@@ -7,14 +7,13 @@ import type { Account, Address } from 'gill'
 import { EventType, Product } from '@project/anchor'
 import { useLogEventMutation } from './supply_chain-data-access'
 
-
 type ProductAccount = Account<Product, string>
 
-export function StageDisplay({ 
-  product, 
+export function StageDisplay({
+  product,
   userAddress,
-  onStageCompleted 
-}: { 
+  onStageCompleted,
+}: {
   product: ProductAccount
   userAddress?: string
   onStageCompleted?: () => void
@@ -34,10 +33,10 @@ export function StageDisplay({
 
   const handleCompleteStage = async () => {
     try {
-      await completeStageMutation.mutateAsync({ 
+      await completeStageMutation.mutateAsync({
         productAddress: product.address as Address,
         eventType: EventType.Complete,
-        description: `Stage completed: ${currentStage.name}`
+        description: `Stage completed: ${currentStage.name}`,
       })
       setShowCompleteConfirm(false)
       onStageCompleted?.()
@@ -61,10 +60,10 @@ export function StageDisplay({
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ 
-                width: `${(Math.min(currentStageIndex + 1, product.data.stages.length) / product.data.stages.length) * 100}%` 
+              style={{
+                width: `${(Math.min(currentStageIndex + 1, product.data.stages.length) / product.data.stages.length) * 100}%`,
               }}
             />
           </div>
@@ -78,17 +77,12 @@ export function StageDisplay({
               <div className="mt-1 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-blue-900">{currentStage.name}</span>
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                    In Progress
-                  </span>
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">In Progress</span>
                 </div>
                 {currentStage.owner && currentStage.owner.__option === 'Some' && (
                   <div className="mt-2 text-xs text-blue-700">
                     <span>Auto-transfer to: </span>
-                    <ExplorerLink 
-                      address={currentStage.owner.value} 
-                      label={ellipsify(currentStage.owner.value)}
-                    />
+                    <ExplorerLink address={currentStage.owner.value} label={ellipsify(currentStage.owner.value)} />
                   </div>
                 )}
               </div>
@@ -96,11 +90,7 @@ export function StageDisplay({
 
             {/* Complete Stage Button */}
             {isOwner && !showCompleteConfirm && (
-              <Button 
-                onClick={() => setShowCompleteConfirm(true)}
-                className="w-full"
-                size="sm"
-              >
+              <Button onClick={() => setShowCompleteConfirm(true)} className="w-full" size="sm">
                 Complete {currentStage.name} Stage
               </Button>
             )}
@@ -111,7 +101,7 @@ export function StageDisplay({
                 <div className="text-sm">
                   <p className="font-medium text-yellow-800">Complete Current Stage?</p>
                   <p className="text-yellow-700 mt-1">
-                    This will mark "{currentStage.name}" as completed.
+                    This will mark &quot; {currentStage.name} &quot; as completed.
                     {nextStage?.owner && nextStage.owner.__option === 'Some' && (
                       <span className="block mt-1">
                         <strong>Ownership will transfer to:</strong> {ellipsify(nextStage.owner.value)}
@@ -125,7 +115,7 @@ export function StageDisplay({
                   </p>
                 </div>
                 <div className="flex space-x-2">
-                  <Button 
+                  <Button
                     onClick={handleCompleteStage}
                     disabled={completeStageMutation.isPending}
                     size="sm"
@@ -133,12 +123,7 @@ export function StageDisplay({
                   >
                     {completeStageMutation.isPending ? 'Completing...' : 'Confirm'}
                   </Button>
-                  <Button 
-                    onClick={() => setShowCompleteConfirm(false)}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                  >
+                  <Button onClick={() => setShowCompleteConfirm(false)} variant="outline" size="sm" className="flex-1">
                     Cancel
                   </Button>
                 </div>
@@ -154,17 +139,12 @@ export function StageDisplay({
             <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="text-gray-700">{nextStage.name}</span>
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                  Pending
-                </span>
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Pending</span>
               </div>
               {nextStage.owner && nextStage.owner.__option === 'Some' && (
                 <div className="mt-2 text-xs text-gray-600">
                   <span>Will transfer to: </span>
-                  <ExplorerLink 
-                    address={nextStage.owner.value} 
-                    label={ellipsify(nextStage.owner.value)}
-                  />
+                  <ExplorerLink address={nextStage.owner.value} label={ellipsify(nextStage.owner.value)} />
                 </div>
               )}
             </div>
@@ -176,9 +156,7 @@ export function StageDisplay({
           <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="font-medium text-green-900">All Stages Completed</span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                Delivered
-              </span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Delivered</span>
             </div>
             <p className="text-green-700 text-xs mt-1">
               This product has successfully completed all supply chain stages.
@@ -197,52 +175,46 @@ export function StageDisplay({
 
         {/* All Stages List (Collapsible) */}
         <details className="text-sm">
-          <summary className="cursor-pointer font-medium text-gray-700 hover:text-gray-900">
-            View All Stages
-          </summary>
+          <summary className="cursor-pointer font-medium text-gray-700 hover:text-gray-900">View All Stages</summary>
           <div className="mt-2 space-y-2">
             {product.data.stages.map((stage, index) => (
-              <div 
+              <div
                 key={index}
                 className={`p-2 rounded border ${
-                  index < currentStageIndex 
-                    ? 'bg-green-50 border-green-200' 
+                  index < currentStageIndex
+                    ? 'bg-green-50 border-green-200'
                     : index === currentStageIndex
-                    ? 'bg-blue-50 border-blue-200'
-                    : 'bg-gray-50 border-gray-200'
+                      ? 'bg-blue-50 border-blue-200'
+                      : 'bg-gray-50 border-gray-200'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm ${
-                    index < currentStageIndex 
-                      ? 'text-green-900' 
-                      : index === currentStageIndex
-                      ? 'text-blue-900'
-                      : 'text-gray-700'
-                  }`}>
+                  <span
+                    className={`text-sm ${
+                      index < currentStageIndex
+                        ? 'text-green-900'
+                        : index === currentStageIndex
+                          ? 'text-blue-900'
+                          : 'text-gray-700'
+                    }`}
+                  >
                     {index + 1}. {stage.name}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    index < currentStageIndex 
-                      ? 'bg-green-100 text-green-800' 
-                      : index === currentStageIndex
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {index < currentStageIndex 
-                      ? 'Completed' 
-                      : index === currentStageIndex
-                      ? 'Current'
-                      : 'Pending'
-                    }
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${
+                      index < currentStageIndex
+                        ? 'bg-green-100 text-green-800'
+                        : index === currentStageIndex
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {index < currentStageIndex ? 'Completed' : index === currentStageIndex ? 'Current' : 'Pending'}
                   </span>
                 </div>
                 {stage.owner && stage.owner.__option === 'Some' && (
                   <div className="mt-1 text-xs text-gray-600">
-                    Transfer to: <ExplorerLink 
-                      address={stage.owner.value} 
-                      label={ellipsify(stage.owner.value)}
-                    />
+                    Transfer to: <ExplorerLink address={stage.owner.value} label={ellipsify(stage.owner.value)} />
                   </div>
                 )}
               </div>

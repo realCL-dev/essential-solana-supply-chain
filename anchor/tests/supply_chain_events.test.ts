@@ -68,11 +68,7 @@ describe('supply_chain_events', () => {
 
       const [_productAccountAddress] = await getProgramDerivedAddress({
         programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-        seeds: [
-          'product',
-          getAddressEncoder().encode(owner1.address),
-          getUtf8Encoder().encode(serialNumber),
-        ],
+        seeds: ['product', getAddressEncoder().encode(owner1.address), getUtf8Encoder().encode(serialNumber)],
       })
       productAccountAddress = _productAccountAddress
 
@@ -123,11 +119,7 @@ describe('supply_chain_events', () => {
 
       const [_productWithStagesAddress] = await getProgramDerivedAddress({
         programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-        seeds: [
-          'product',
-          getAddressEncoder().encode(owner1.address),
-          getUtf8Encoder().encode(serialNumber),
-        ],
+        seeds: ['product', getAddressEncoder().encode(owner1.address), getUtf8Encoder().encode(serialNumber)],
       })
       productWithStagesAddress = _productWithStagesAddress
 
@@ -680,5 +672,4 @@ describe('supply_chain_events', () => {
       }
     }
   })
-
 })

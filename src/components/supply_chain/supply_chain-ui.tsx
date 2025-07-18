@@ -31,15 +31,13 @@ const QR_CODE_CONFIG = {
   errorCorrectionLevel: 'H' as const,
   color: {
     dark: '#000000',
-    light: '#FFFFFF'
-  }
+    light: '#FFFFFF',
+  },
 }
-
-
 
 const INPUT_LIMITS = {
   SERIAL_NUMBER_MAX_LENGTH: 50,
-  DESCRIPTION_MAX_LENGTH: 200
+  DESCRIPTION_MAX_LENGTH: 200,
 }
 
 type ProductAccount = Account<Product, string>
@@ -53,9 +51,11 @@ export function ProductList() {
   const productsQuery = useProductAccountsQuery()
 
   if (productsQuery.isLoading) {
-    return <div className="flex justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-    </div>
+    return (
+      <div className="flex justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
   if (!productsQuery.data?.length) {
@@ -80,9 +80,11 @@ export function SupplyChainProgramGuard({ children }: { children: ReactNode }) {
   const programAccountQuery = useSupplyChainProgram()
 
   if (programAccountQuery.isLoading) {
-    return <div className="flex justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-    </div>
+    return (
+      <div className="flex justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
   if (!programAccountQuery.data?.value) {
@@ -103,19 +105,25 @@ function ProductCard({ product }: { product: ProductAccount }) {
   const [showTransferForm, setShowTransferForm] = useState(false)
   const [showEvents, setShowEvents] = useState(false)
   const [showQRCode, setShowQRCode] = useState(false)
-  
+
   const productQuery = useProductQuery(product.address as Address)
   const currentProduct = productQuery.data || product
   const { account } = useWalletUi()
 
   const getStatusColor = (status: ProductStatus) => {
     switch (status) {
-      case ProductStatus.Created: return 'bg-blue-100 text-blue-800'
-      case ProductStatus.InTransit: return 'bg-yellow-100 text-yellow-800'
-      case ProductStatus.Received: return 'bg-green-100 text-green-800'
-      case ProductStatus.Delivered: return 'bg-green-100 text-green-800'
-      case ProductStatus.Transferred: return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case ProductStatus.Created:
+        return 'bg-blue-100 text-blue-800'
+      case ProductStatus.InTransit:
+        return 'bg-yellow-100 text-yellow-800'
+      case ProductStatus.Received:
+        return 'bg-green-100 text-green-800'
+      case ProductStatus.Delivered:
+        return 'bg-green-100 text-green-800'
+      case ProductStatus.Transferred:
+        return 'bg-purple-100 text-purple-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -141,15 +149,11 @@ function ProductCard({ product }: { product: ProductAccount }) {
             <div className="text-xs">
               Account: <ExplorerLink address={currentProduct.address} label={ellipsify(currentProduct.address)} />
             </div>
-            <div className="text-xs">
-              Events: {currentProduct.data.eventsCounter.toString()}
-            </div>
+            <div className="text-xs">Events: {currentProduct.data.eventsCounter.toString()}</div>
             {/* Show if product uses stages */}
             {currentProduct.data.stages && (
               <div className="text-xs">
-                <span className="px-1 py-0.5 bg-purple-100 text-purple-800 rounded text-xs">
-                  Staged Tracking
-                </span>
+                <span className="px-1 py-0.5 bg-purple-100 text-purple-800 rounded text-xs">Staged Tracking</span>
               </div>
             )}
           </div>
@@ -159,57 +163,30 @@ function ProductCard({ product }: { product: ProductAccount }) {
         <div className="space-y-2">
           {/* Stage Display - only for staged products */}
           {currentProduct.data.stages && (
-            <StageDisplay
-              product={currentProduct}
-              userAddress={account?.address}
-              onStageCompleted={refreshProduct}
-            />
+            <StageDisplay product={currentProduct} userAddress={account?.address} onStageCompleted={refreshProduct} />
           )}
 
-          <Button 
-            onClick={() => setShowQRCode(!showQRCode)} 
-            variant="outline" 
-            className="w-full"
-          >
+          <Button onClick={() => setShowQRCode(!showQRCode)} variant="outline" className="w-full">
             {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
           </Button>
-          {showQRCode && (
-            <ProductQRCode productAddress={product.address as Address} />
-          )}
-          <Button 
-            onClick={() => setShowEvents(!showEvents)} 
-            variant="outline" 
-            className="w-full"
-          >
+          {showQRCode && <ProductQRCode productAddress={product.address as Address} />}
+          <Button onClick={() => setShowEvents(!showEvents)} variant="outline" className="w-full">
             {showEvents ? 'Hide Events' : 'View Events'}
           </Button>
-          {showEvents && (
-            <EventsList productAddress={product.address as Address} />
-          )}
-          <Button 
-            onClick={() => setShowEventForm(!showEventForm)} 
-            variant="outline" 
-            className="w-full"
-          >
+          {showEvents && <EventsList productAddress={product.address as Address} />}
+          <Button onClick={() => setShowEventForm(!showEventForm)} variant="outline" className="w-full">
             {showEventForm ? 'Cancel' : 'Log Event'}
           </Button>
           {showEventForm && (
-            <LogEventForm 
-              productAddress={product.address as Address} 
-              onClose={() => setShowEventForm(false)} 
-            />
+            <LogEventForm productAddress={product.address as Address} onClose={() => setShowEventForm(false)} />
           )}
-          <Button 
-            onClick={() => setShowTransferForm(!showTransferForm)} 
-            variant="outline" 
-            className="w-full"
-          >
+          <Button onClick={() => setShowTransferForm(!showTransferForm)} variant="outline" className="w-full">
             {showTransferForm ? 'Cancel' : 'Transfer Ownership'}
           </Button>
           {showTransferForm && (
-            <TransferOwnershipForm 
-              productAddress={product.address as Address} 
-              onClose={() => setShowTransferForm(false)} 
+            <TransferOwnershipForm
+              productAddress={product.address as Address}
+              onClose={() => setShowTransferForm(false)}
             />
           )}
         </div>
@@ -222,10 +199,7 @@ export function CreateProductForm() {
   return <EnhancedCreateProductForm />
 }
 
-function LogEventForm({ productAddress, onClose }: { 
-  productAddress: Address; 
-  onClose: () => void 
-}) {
+function LogEventForm({ productAddress, onClose }: { productAddress: Address; onClose: () => void }) {
   const { eventType, setEventType, description, setDescription, reset, isValid } = useLogEventForm()
   const logEventMutation = useLogEventMutation()
 
@@ -246,11 +220,7 @@ function LogEventForm({ productAddress, onClose }: {
     <div className="border rounded-lg p-4 bg-white dark:bg-accent">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Log Event</h3>
-        <Button
-          onClick={onClose}
-          variant="outline"
-          size="sm"
-        >
+        <Button onClick={onClose} variant="outline" size="sm">
           ✕
         </Button>
       </div>
@@ -279,11 +249,7 @@ function LogEventForm({ productAddress, onClose }: {
             maxLength={INPUT_LIMITS.DESCRIPTION_MAX_LENGTH}
           />
         </div>
-        <Button 
-          type="submit" 
-          disabled={!isValid || logEventMutation.isPending}
-          className="w-full"
-        >
+        <Button type="submit" disabled={!isValid || logEventMutation.isPending} className="w-full">
           {logEventMutation.isPending ? 'Logging Event...' : 'Log Event'}
         </Button>
       </form>
@@ -291,10 +257,7 @@ function LogEventForm({ productAddress, onClose }: {
   )
 }
 
-function TransferOwnershipForm({ productAddress, onClose }: { 
-  productAddress: Address; 
-  onClose: () => void 
-}) {
+function TransferOwnershipForm({ productAddress, onClose }: { productAddress: Address; onClose: () => void }) {
   const [newOwner, setNewOwner] = useState('')
   const transferMutation = useTransferOwnershipMutation()
 
@@ -303,9 +266,9 @@ function TransferOwnershipForm({ productAddress, onClose }: {
     if (!newOwner.trim()) return
 
     try {
-      await transferMutation.mutateAsync({ 
-        productAddress, 
-        newOwner: newOwner.trim() as Address 
+      await transferMutation.mutateAsync({
+        productAddress,
+        newOwner: newOwner.trim() as Address,
       })
       onClose()
     } catch (error) {
@@ -317,11 +280,7 @@ function TransferOwnershipForm({ productAddress, onClose }: {
     <div className="border rounded-lg p-4 bg-white">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Transfer Ownership</h3>
-        <Button
-          onClick={onClose}
-          variant="outline"
-          size="sm"
-        >
+        <Button onClick={onClose} variant="outline" size="sm">
           ✕
         </Button>
       </div>
@@ -342,11 +301,7 @@ function TransferOwnershipForm({ productAddress, onClose }: {
             required
           />
         </div>
-        <Button 
-          type="submit" 
-          disabled={!newOwner.trim() || transferMutation.isPending}
-          className="w-full"
-        >
+        <Button type="submit" disabled={!newOwner.trim() || transferMutation.isPending} className="w-full">
           {transferMutation.isPending ? 'Transferring...' : 'Transfer Ownership'}
         </Button>
       </form>
@@ -359,9 +314,12 @@ function EventsList({ productAddress }: { productAddress: Address }) {
 
   const getEventTypeColor = (eventType: EventType) => {
     switch (eventType) {
-      case EventType.Ongoing: return 'bg-blue-100 text-blue-800'
-      case EventType.Complete: return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case EventType.Ongoing:
+        return 'bg-blue-100 text-blue-800'
+      case EventType.Complete:
+        return 'bg-green-100 text-green-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -388,16 +346,13 @@ function EventsList({ productAddress }: { productAddress: Address }) {
           <div key={index} className="border-b last:border-b-0 pb-2 last:pb-0">
             <div className="flex items-center justify-between mb-1">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.data.eventType)}`}>
-                {event.data.stageName ? `${event.data.stageName} -- ` : ''}{EventType[event.data.eventType]}
+                {event.data.stageName ? `${event.data.stageName} -- ` : ''}
+                {EventType[event.data.eventType]}
               </span>
-              <span className="text-xs text-gray-500">
-                Event #{event.data.eventIndex.toString()}
-              </span>
+              <span className="text-xs text-gray-500">Event #{event.data.eventIndex.toString()}</span>
             </div>
             <p className="text-sm mb-1">{event.data.description}</p>
-            <p className="text-xs text-gray-500">
-              {new Date(Number(event.data.timestamp) * 1000).toUTCString()}
-            </p>
+            <p className="text-xs text-gray-500">{new Date(Number(event.data.timestamp) * 1000).toUTCString()}</p>
           </div>
         ))}
       </div>
@@ -459,24 +414,17 @@ function ProductQRCode({ productAddress }: { productAddress: Address }) {
   return (
     <div className="flex flex-col items-center space-y-3 p-4 bg-gray-50 rounded-lg">
       {qrCodeDataURL && (
-        <Image 
-          src={qrCodeDataURL} 
+        <Image
+          src={qrCodeDataURL}
           alt={`QR Code for product ${productAddress}`}
           className="w-48 h-48 border border-gray-200 rounded"
           width={192}
           height={192}
         />
       )}
-      
-      <p className="text-xs text-gray-600 text-center font-mono break-all">
-        Product: {productAddress}
-      </p>
-      <Button 
-        onClick={handleDownload}
-        variant="outline"
-        size="sm"
-        disabled={!qrCodeDataURL}
-      >
+
+      <p className="text-xs text-gray-600 text-center font-mono break-all">Product: {productAddress}</p>
+      <Button onClick={handleDownload} variant="outline" size="sm" disabled={!qrCodeDataURL}>
         Download QR Code
       </Button>
     </div>
@@ -491,7 +439,7 @@ export function QRScanner() {
   const [isPhantomMobile, setIsPhantomMobile] = useState(false)
   const [isInAppBrowser, setIsInAppBrowser] = useState(false)
   const [manualAddress, setManualAddress] = useState('')
-  
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const scanningTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -499,137 +447,128 @@ export function QRScanner() {
 
   const stopScanning = useCallback(() => {
     if (scanningTimeoutRef.current) {
-      clearTimeout(scanningTimeoutRef.current);
+      clearTimeout(scanningTimeoutRef.current)
     }
     if (errorTimeoutRef.current) {
-      clearTimeout(errorTimeoutRef.current);
-      errorTimeoutRef.current = null;
+      clearTimeout(errorTimeoutRef.current)
+      errorTimeoutRef.current = null
     }
     scanningTimeoutRef.current = setTimeout(() => {
-      setIsScanning(false);
-      scanningTimeoutRef.current = null;
-    }, 3000); // Increased delay to 3000ms
-  }, []);
+      setIsScanning(false)
+      scanningTimeoutRef.current = null
+    }, 3000) // Increased delay to 3000ms
+  }, [])
 
   useEffect(() => {
     const checkMobile = () => {
       const userAgent = navigator.userAgent || ''
       return /android|webos|iphone|ipad|ipod|iemobile|opera mini/i.test(userAgent.toLowerCase())
     }
-    
+
     const checkPhantomMobile = () => {
       const userAgent = navigator.userAgent || ''
       return userAgent.toLowerCase().includes('phantom')
     }
-    
+
     const checkInAppBrowser = () => {
       const userAgent = navigator.userAgent || ''
       // Common in-app browser patterns
       return /wv|webview|inappbrowser|phantom|metamask|trustwallet|coinbase/i.test(userAgent.toLowerCase())
     }
-    
+
     setIsMobileDevice(checkMobile())
     setIsPhantomMobile(checkPhantomMobile())
     setIsInAppBrowser(checkInAppBrowser())
   }, [])
 
   useEffect(() => {
-    let qrScanner: QrScanner | null = null;
+    let qrScanner: QrScanner | null = null
 
     if (isScanning) {
       // Reset success flag and clear any errors when starting a new scan
-      hasSuccessfulScanRef.current = false;
-      setError('');
-      
-      const videoEl = videoRef.current;
+      hasSuccessfulScanRef.current = false
+      setError('')
+
+      const videoEl = videoRef.current
       if (videoEl) {
         const throttledScanResult = (result: string | { data: string }) => {
-          const resultData = typeof result === 'string' ? result : result.data;
-          console.log('Scan successful:', resultData);
-          
+          const resultData = typeof result === 'string' ? result : result.data
+          console.log('Scan successful:', resultData)
+
           // Clear any pending error timeouts and existing errors on successful scan
           if (errorTimeoutRef.current) {
-            clearTimeout(errorTimeoutRef.current);
-            errorTimeoutRef.current = null;
+            clearTimeout(errorTimeoutRef.current)
+            errorTimeoutRef.current = null
           }
-          setError('');
-          hasSuccessfulScanRef.current = true;
-          
+          setError('')
+          hasSuccessfulScanRef.current = true
+
           try {
-            const url = new URL(resultData);
-            const productAddress = url.searchParams.get('scan');
+            const url = new URL(resultData)
+            const productAddress = url.searchParams.get('scan')
             if (productAddress) {
-              const decodedAddress = decodeURIComponent(productAddress);
-              setScannedProductAddress(decodedAddress as Address);
-              stopScanning();
+              const decodedAddress = decodeURIComponent(productAddress)
+              setScannedProductAddress(decodedAddress as Address)
+              stopScanning()
             } else {
-              setError('Invalid QR code. Please scan a product QR code.');
+              setError('Invalid QR code. Please scan a product QR code.')
             }
           } catch {
             if (resultData.length >= 32 && resultData.length <= 44) {
-              setScannedProductAddress(resultData as Address);
-              stopScanning();
+              setScannedProductAddress(resultData as Address)
+              stopScanning()
             } else {
-              setError('Invalid QR code format.');
+              setError('Invalid QR code format.')
             }
           }
-        };
+        }
 
-        qrScanner = new QrScanner(
-        videoEl,
-        throttledScanResult,
-        {
+        qrScanner = new QrScanner(videoEl, throttledScanResult, {
           onDecodeError: (error) => {
-            console.error('QR Scanner decoding error:', error);
-            
+            console.error('QR Scanner decoding error:', error)
+
             // Only show error if no successful scan has occurred and after a delay
             if (!hasSuccessfulScanRef.current) {
               // Clear any existing error timeout
               if (errorTimeoutRef.current) {
-                clearTimeout(errorTimeoutRef.current);
+                clearTimeout(errorTimeoutRef.current)
               }
-              
+
               // Set a timeout to show error only if scanning continues to fail
               errorTimeoutRef.current = setTimeout(() => {
                 if (!hasSuccessfulScanRef.current) {
-                  setError('Failed to decode QR code. Please try again.');
+                  setError('Failed to decode QR code. Please try again.')
                 }
-                errorTimeoutRef.current = null;
-              }, 5000); // Wait 5 seconds before showing error
+                errorTimeoutRef.current = null
+              }, 5000) // Wait 5 seconds before showing error
             }
           },
           returnDetailedScanResult: true,
           highlightScanRegion: !isMobileDevice,
           highlightCodeOutline: !isMobileDevice,
           maxScansPerSecond: isMobileDevice ? 2 : 10,
-          preferredCamera: 'environment'
-        }
-      );
+          preferredCamera: 'environment',
+        })
 
         qrScanner.start().catch((err) => {
-          console.error('Camera error:', err);
-          setError(`Camera error: ${err.message}`);
-          stopScanning();
-        });
+          console.error('Camera error:', err)
+          setError(`Camera error: ${err.message}`)
+          stopScanning()
+        })
       }
     }
 
     return () => {
-      qrScanner?.destroy();
+      qrScanner?.destroy()
       if (errorTimeoutRef.current) {
-        clearTimeout(errorTimeoutRef.current);
-        errorTimeoutRef.current = null;
+        clearTimeout(errorTimeoutRef.current)
+        errorTimeoutRef.current = null
       }
-    };
-  }, [isScanning, stopScanning, isMobileDevice]);
+    }
+  }, [isScanning, stopScanning, isMobileDevice])
 
   if (scannedProductAddress) {
-    return (
-      <QRScanEventForm
-        productAddress={scannedProductAddress}
-        onClose={() => setScannedProductAddress(null)}
-      />
-    )
+    return <QRScanEventForm productAddress={scannedProductAddress} onClose={() => setScannedProductAddress(null)} />
   }
 
   return (
@@ -646,21 +585,26 @@ export function QRScanner() {
                   <div className="text-blue-800 text-sm">
                     <p className="font-semibold mb-2">🔷 Phantom Browser Tips:</p>
                     <ul className="text-xs space-y-1">
-                      <li>• When prompted, tap <strong>&quot;Allow&quot;</strong> for camera access</li>
+                      <li>
+                        • When prompted, tap <strong>&quot;Allow&quot;</strong> for camera access
+                      </li>
                       <li>• If camera fails, use the manual input option below</li>
                     </ul>
                   </div>
                 ) : (
                   <p className="text-blue-800 text-sm">
-                    <strong>Mobile Tips:</strong> Ensure camera permissions are enabled and hold your device steady when scanning.
+                    <strong>Mobile Tips:</strong> Ensure camera permissions are enabled and hold your device steady when
+                    scanning.
                   </p>
                 )}
               </div>
             )}
-            <Button onClick={() => {
-              setError('');
-              setIsScanning(true);
-            }}>
+            <Button
+              onClick={() => {
+                setError('')
+                setIsScanning(true)
+              }}
+            >
               Start Scanning
             </Button>
           </div>
@@ -669,14 +613,12 @@ export function QRScanner() {
               <p className="text-red-800 text-sm">{error}</p>
             </div>
           )}
-          
+
           {/* Manual input option for when camera fails */}
           {(isMobileDevice || error) && (
             <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <h3 className="text-sm font-semibold text-gray-800 mb-3">Manual Input</h3>
-              <p className="text-xs text-gray-600 mb-3">
-                Enter the product address manually:
-              </p>
+              <p className="text-xs text-gray-600 mb-3">Enter the product address manually:</p>
               <div className="flex flex-col space-y-2">
                 <input
                   type="text"
@@ -706,25 +648,15 @@ export function QRScanner() {
       ) : (
         <div className="space-y-4">
           <div className="relative">
-            <video
-              ref={videoRef}
-              className="w-full h-64 bg-black rounded-lg object-cover"
-              playsInline
-              muted
-            />
+            <video ref={videoRef} className="w-full h-64 bg-black rounded-lg object-cover" playsInline muted />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="border-2 border-white rounded-lg p-4 bg-black bg-opacity-30">
-                <p className="text-white text-sm text-center">
-                  Point camera at QR code
-                </p>
+                <p className="text-white text-sm text-center">Point camera at QR code</p>
               </div>
             </div>
           </div>
           <div className="text-center">
-            <Button 
-              onClick={stopScanning}
-              variant="outline"
-            >
+            <Button onClick={stopScanning} variant="outline">
               Stop Scanning
             </Button>
           </div>
@@ -733,9 +665,7 @@ export function QRScanner() {
               {isPhantomMobile || isInAppBrowser ? (
                 <div className="text-blue-800 text-sm text-center">
                   <p className="font-semibold mb-1">🔷 Phantom Scanning</p>
-                  <p className="text-xs">
-                    Hold steady • Ensure good lighting • QR code should fill the viewfinder
-                  </p>
+                  <p className="text-xs">Hold steady • Ensure good lighting • QR code should fill the viewfinder</p>
                 </div>
               ) : (
                 <p className="text-blue-800 text-sm text-center">
@@ -750,10 +680,7 @@ export function QRScanner() {
   )
 }
 
-function QRScanEventForm({ productAddress, onClose }: { 
-  productAddress: Address; 
-  onClose: () => void 
-}) {
+function QRScanEventForm({ productAddress, onClose }: { productAddress: Address; onClose: () => void }) {
   const { eventType, setEventType, description, setDescription, reset, isValid } = useLogEventForm()
   const logEventMutation = useLogEventMutation()
   const productQuery = useProductQuery(productAddress)
@@ -770,7 +697,9 @@ function QRScanEventForm({ productAddress, onClose }: {
     }
 
     if (productQuery.data && productQuery.data.data.owner !== account.address) {
-      alert(`Only the product owner can log events. Owner: ${productQuery.data.data.owner}, Current wallet: ${account.address}`)
+      alert(
+        `Only the product owner can log events. Owner: ${productQuery.data.data.owner}, Current wallet: ${account.address}`,
+      )
       return
     }
 
@@ -780,7 +709,7 @@ function QRScanEventForm({ productAddress, onClose }: {
       onClose()
     } catch (error) {
       console.error('Error logging event:', error)
-      
+
       if (error instanceof Error && error.message.includes('UnauthorizedAccess')) {
         alert('You are not authorized to log events for this product. Only the product owner can log events.')
       } else if (error instanceof Error && error.message.includes('Unexpected error')) {
@@ -795,11 +724,7 @@ function QRScanEventForm({ productAddress, onClose }: {
     <div className="border rounded-lg p-4 bg-white">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Log Event</h3>
-        <Button
-          onClick={onClose}
-          variant="outline"
-          size="sm"
-        >
+        <Button onClick={onClose} variant="outline" size="sm">
           ✕
         </Button>
       </div>
@@ -810,14 +735,22 @@ function QRScanEventForm({ productAddress, onClose }: {
             <div className="font-medium">Product #{productQuery.data.data.serialNumber}</div>
             <div className="text-gray-600">{productQuery.data.data.description}</div>
             <div className="text-xs text-gray-500 mt-1">
-              Status: <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                productQuery.data.data.status === ProductStatus.Created ? 'bg-blue-100 text-blue-800' :
-                productQuery.data.data.status === ProductStatus.InTransit ? 'bg-yellow-100 text-yellow-800' :
-                productQuery.data.data.status === ProductStatus.Received ? 'bg-green-100 text-green-800' :
-                productQuery.data.data.status === ProductStatus.Delivered ? 'bg-green-100 text-green-800' :
-                productQuery.data.data.status === ProductStatus.Transferred ? 'bg-purple-100 text-purple-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
+              Status:{' '}
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  productQuery.data.data.status === ProductStatus.Created
+                    ? 'bg-blue-100 text-blue-800'
+                    : productQuery.data.data.status === ProductStatus.InTransit
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : productQuery.data.data.status === ProductStatus.Received
+                        ? 'bg-green-100 text-green-800'
+                        : productQuery.data.data.status === ProductStatus.Delivered
+                          ? 'bg-green-100 text-green-800'
+                          : productQuery.data.data.status === ProductStatus.Transferred
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-800'
+                }`}
+              >
                 {ProductStatus[productQuery.data.data.status]}
               </span>
             </div>
@@ -863,11 +796,7 @@ function QRScanEventForm({ productAddress, onClose }: {
             className="p-3 text-base"
           />
         </div>
-        <Button 
-          type="submit" 
-          disabled={!isValid || logEventMutation.isPending}
-          className="w-full p-3 text-base"
-        >
+        <Button type="submit" disabled={!isValid || logEventMutation.isPending} className="w-full p-3 text-base">
           {logEventMutation.isPending ? 'Logging Event...' : 'Log Event'}
         </Button>
       </form>
