@@ -20,7 +20,6 @@ import {
 } from '@project/anchor'
 import type { Address } from 'gill'
 import { getProgramDerivedAddress, getBytesEncoder, getAddressEncoder, getU64Encoder, getUtf8Encoder } from 'gill'
-import { expectAddress } from 'anchor/src/client/js/generated/shared'
 
 const TRANSACTION_PROCESSING_DELAY = 2000
 
@@ -49,13 +48,6 @@ export function useInitializeProductMutation() {
   return useMutation({
     mutationFn: async ({ serialNumber, description }: { serialNumber: string; description: string }) => {
       try {
-
-        console.log('🚀 Starting product initialization...')
-        console.log('📝 Input params:', { serialNumber, description })
-        console.log('👤 Signer address:', signer.address)
-        console.log('🌐 Cluster:', cluster)
-        console.log('📋 Program ID:', SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS)
-
         const [productAccountAddress] = await getProgramDerivedAddress({
           programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
           seeds: [
@@ -72,17 +64,8 @@ export function useInitializeProductMutation() {
           description,
           stages:null, // No stages for this mutation
         })
-
-
-        console.log('🏦 Instruction accounts:', instruction.accounts.map(acc => ({
-          pubkey: acc.address
-        })))
         
         const result = await signAndSend(instruction, signer)
-
-        console.log('\nInitialize product result:', result);
-        console.log('\nProduct account address:', productAccountAddress);
-
         return result
       } catch (error) {
         console.error('Error in mutationFn:', error)
@@ -237,8 +220,6 @@ export function useProductAccountsQuery() {
         const programAccounts = await client.rpc.getProgramAccounts(programId, {
           encoding: 'base64'
         }).send()
-
-        console.log('\nFetched program accounts:', programAccounts)
         
         if (!programAccounts || programAccounts.length === 0) {
           return []

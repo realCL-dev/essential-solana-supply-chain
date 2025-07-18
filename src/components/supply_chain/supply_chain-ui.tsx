@@ -160,7 +160,7 @@ function ProductCard({ product }: { product: ProductAccount }) {
           {/* Stage Display - only for staged products */}
           {currentProduct.data.stages && (
             <StageDisplay
-              product={currentProduct as any} // Type casting for now
+              product={currentProduct}
               userAddress={account?.address}
               onStageCompleted={refreshProduct}
             />

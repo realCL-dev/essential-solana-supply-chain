@@ -237,11 +237,11 @@ export function StageDisplay({
                     }
                   </span>
                 </div>
-                {stage.owner && (
+                {stage.owner && stage.owner.__option === 'Some' && (
                   <div className="mt-1 text-xs text-gray-600">
                     Transfer to: <ExplorerLink 
-                      address={stage.owner.toString()} 
-                      label={ellipsify(stage.owner.toString())}
+                      address={stage.owner.value} 
+                      label={ellipsify(stage.owner.value)}
                     />
                   </div>
                 )}
