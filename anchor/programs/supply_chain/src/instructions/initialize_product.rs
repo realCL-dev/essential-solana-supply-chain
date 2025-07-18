@@ -57,16 +57,19 @@ pub fn process_initialize_product(
         }
 
         product_account.stages = stages;
+        product_account.use_stages = true;
     } else {
         product_account.stages = Vec::new();
+        product_account.use_stages = false;
     }
 
+    product_account.current_stage_index = 0;
     product_account.owner = ctx.accounts.owner.key();
     product_account.serial_number = serial_number;
     product_account.description = description;
     product_account.status = ProductStatus::Created;
     product_account.created_at = clock.unix_timestamp;
-    product_account.current_stage_index = 0;
     product_account.events_counter = 0;
+
     Ok(())
 }

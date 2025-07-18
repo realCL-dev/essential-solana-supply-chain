@@ -21,15 +21,15 @@ import {
   getUtf8Decoder,
   getUtf8Encoder,
   transformEncoder,
+  type AccountMeta,
+  type AccountSignerMeta,
   type Address,
   type Codec,
   type Decoder,
   type Encoder,
-  type IAccountMeta,
-  type IAccountSignerMeta,
-  type IInstruction,
-  type IInstructionWithAccounts,
-  type IInstructionWithData,
+  type Instruction,
+  type InstructionWithAccounts,
+  type InstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
@@ -55,16 +55,16 @@ export function getLogEventDiscriminatorBytes() {
 
 export type LogEventInstruction<
   TProgram extends string = typeof SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-  TAccountProductAccount extends string | IAccountMeta<string> = string,
-  TAccountEventAccount extends string | IAccountMeta<string> = string,
-  TAccountSigner extends string | IAccountMeta<string> = string,
+  TAccountProductAccount extends string | AccountMeta<string> = string,
+  TAccountEventAccount extends string | AccountMeta<string> = string,
+  TAccountSigner extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
+    | AccountMeta<string> = '11111111111111111111111111111111',
+  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+> = Instruction<TProgram> &
+  InstructionWithData<ReadonlyUint8Array> &
+  InstructionWithAccounts<
     [
       TAccountProductAccount extends string
         ? WritableAccount<TAccountProductAccount>
@@ -74,7 +74,7 @@ export type LogEventInstruction<
         : TAccountEventAccount,
       TAccountSigner extends string
         ? WritableSignerAccount<TAccountSigner> &
-            IAccountSignerMeta<TAccountSigner>
+            AccountSignerMeta<TAccountSigner>
         : TAccountSigner,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
@@ -85,24 +85,21 @@ export type LogEventInstruction<
 
 export type LogEventInstructionData = {
   discriminator: ReadonlyUint8Array;
-  stageName: string;
-  description: string;
   eventType: EventType;
+  description: string;
 };
 
 export type LogEventInstructionDataArgs = {
-  stageName: string;
-  description: string;
   eventType: EventTypeArgs;
+  description: string;
 };
 
 export function getLogEventInstructionDataEncoder(): Encoder<LogEventInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['stageName', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-      ['description', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ['eventType', getEventTypeEncoder()],
+      ['description', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ]),
     (value) => ({ ...value, discriminator: LOG_EVENT_DISCRIMINATOR })
   );
@@ -111,9 +108,8 @@ export function getLogEventInstructionDataEncoder(): Encoder<LogEventInstruction
 export function getLogEventInstructionDataDecoder(): Decoder<LogEventInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['stageName', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
-    ['description', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['eventType', getEventTypeDecoder()],
+    ['description', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
   ]);
 }
 
@@ -137,9 +133,8 @@ export type LogEventInput<
   eventAccount: Address<TAccountEventAccount>;
   signer: TransactionSigner<TAccountSigner>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stageName: LogEventInstructionDataArgs['stageName'];
-  description: LogEventInstructionDataArgs['description'];
   eventType: LogEventInstructionDataArgs['eventType'];
+  description: LogEventInstructionDataArgs['description'];
 };
 
 export function getLogEventInstruction<
@@ -213,7 +208,7 @@ export function getLogEventInstruction<
 
 export type ParsedLogEventInstruction<
   TProgram extends string = typeof SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -227,11 +222,11 @@ export type ParsedLogEventInstruction<
 
 export function parseLogEventInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[],
+  TAccountMetas extends readonly AccountMeta[],
 >(
-  instruction: IInstruction<TProgram> &
-    IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>
+  instruction: Instruction<TProgram> &
+    InstructionWithAccounts<TAccountMetas> &
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedLogEventInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
     // TODO: Coded error.

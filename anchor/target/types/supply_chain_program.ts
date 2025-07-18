@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/supply_chain_program.json`.
  */
 export type SupplyChainProgram = {
-  "address": "AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc",
+  "address": "7dBmFPmotzJcBjFzAtgkxM3ctX6X6GiHhVTHLYbHfxeE",
   "metadata": {
     "name": "supplyChainProgram",
     "version": "0.1.0",
@@ -13,35 +13,6 @@ export type SupplyChainProgram = {
     "description": "Created with Anchor"
   },
   "instructions": [
-    {
-      "name": "completeStage",
-      "discriminator": [
-        14,
-        56,
-        73,
-        109,
-        170,
-        85,
-        63,
-        218
-      ],
-      "accounts": [
-        {
-          "name": "productAccount",
-          "writable": true
-        },
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
     {
       "name": "initializeProduct",
       "discriminator": [
@@ -172,20 +143,16 @@ export type SupplyChainProgram = {
       ],
       "args": [
         {
-          "name": "stageName",
-          "type": "string"
-        },
-        {
-          "name": "description",
-          "type": "string"
-        },
-        {
           "name": "eventType",
           "type": {
             "defined": {
               "name": "eventType"
             }
           }
+        },
+        {
+          "name": "description",
+          "type": "string"
         }
       ]
     },
@@ -297,6 +264,11 @@ export type SupplyChainProgram = {
       "code": 6008,
       "name": "stageNotCompleted",
       "msg": "Current stage not completed"
+    },
+    {
+      "code": 6009,
+      "name": "productAlreadyDelivered",
+      "msg": "Product already delivered"
     }
   ],
   "types": [
@@ -360,6 +332,10 @@ export type SupplyChainProgram = {
           {
             "name": "currentStageIndex",
             "type": "u8"
+          },
+          {
+            "name": "useStages",
+            "type": "bool"
           }
         ]
       }

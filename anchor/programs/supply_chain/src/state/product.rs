@@ -19,6 +19,7 @@ pub struct Product {
     pub events_counter: u64,
     pub stages: Vec<Stage>,
     pub current_stage_index: u8,
+    pub use_stages: bool,
 }
 
 impl Product {
@@ -47,7 +48,8 @@ impl Product {
         + Self::U64_LEN 
         + Self::VEC_LEN_PREFIX
         + (Self::MAX_STAGES * (Self::STRING_LEN_PREFIX + Self::STAGE_NAME_MAX_LEN + Self::OPTION_LEN + Self::PUBKEY_LEN + Self::BOOL_LEN))
-        + Self::U8_LEN;
+        + Self::U8_LEN
+        + Self::BOOL_LEN;
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]

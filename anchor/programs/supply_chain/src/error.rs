@@ -20,4 +20,6 @@ pub enum SupplyChainError {
     InvalidStageIndex,
     #[msg("Current stage not completed")]
     StageNotCompleted,
+    #[msg("Product already delivered")]
+    ProductAlreadyDelivered,
 }

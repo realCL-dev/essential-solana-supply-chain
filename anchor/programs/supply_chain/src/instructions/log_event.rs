@@ -29,7 +29,7 @@ pub struct LogEvent<'info> {
  * This function logs an event for a product, updating its status and stages as necessary.
  * Allows logging multiple events per stage, with the ability to mark stages as completed.
  */
-pub fn process_log_event(ctx: Context<LogEvent>, stage_name: String, description: String, event_type: EventType) -> Result<()> {
+pub fn process_log_event(ctx: Context<LogEvent>, event_type: EventType, description: String) -> Result<()> {
     let product_account = &mut ctx.accounts.product_account;
     let event_account = &mut ctx.accounts.event_account;
     let clock = Clock::get()?;
@@ -38,11 +38,12 @@ pub fn process_log_event(ctx: Context<LogEvent>, stage_name: String, description
         description.len() <= 200 && !description.is_empty(),
         SupplyChainError::InvalidDescription
     );
-
     require!(
-        stage_name.len() <= Product::STAGE_NAME_MAX_LEN && !stage_name.is_empty(),
-        SupplyChainError::InvalidStageName
+        product_account.status != ProductStatus::Delivered,
+        SupplyChainError::ProductAlreadyDelivered
     );
+
+    product_account.status = ProductStatus::InTransit;
 
     // Check if product has stages
     if !product_account.stages.is_empty() {
@@ -81,28 +82,22 @@ pub fn process_log_event(ctx: Context<LogEvent>, stage_name: String, description
             // Move to next stage if not the last stage
             if current_stage_index + 1 < product_account.stages.len() {
                 product_account.current_stage_index += 1;
+
+                // If next stage has a wallet, transfer ownership
+                if let Some(next_owner) = product_account.stages[current_stage_index + 1].owner {
+                    product_account.owner = next_owner;
+                    product_account.status = ProductStatus::Transferred;
+                }
             }
+
         }
     } else {
-        // Product has no stages - create a new stage
-        require!(
-            product_account.stages.len() < Product::MAX_STAGES,
-            SupplyChainError::TooManyStages
+        // Product has no stages - only the product owner can create events
+        require_eq!(
+            ctx.accounts.signer.key(),
+            product_account.owner,
+            SupplyChainError::UnauthorizedAccess
         );
-
-        let new_stage = Stage {
-            name: stage_name.clone(),
-            owner: Some(ctx.accounts.signer.key()),
-            completed: event_type == EventType::Complete,
-        };
-
-        product_account.stages.push(new_stage);
-        
-        // Set current stage index to the newly created stage
-        product_account.current_stage_index = (product_account.stages.len() - 1) as u8;
-        
-        // Use the provided stage name for the event
-        event_account.stage_name = stage_name;
     }
 
     // Populate event account

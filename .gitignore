@@ -48,3 +48,4 @@ next-env.d.ts
 /anchor/target/test-ledger
 /anchor/target/.rustc_info.json
 /anchor/target/sbpf-solana-solana
+/anchor/target/rust-analyzer/

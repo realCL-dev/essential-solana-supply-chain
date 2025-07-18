@@ -21,6 +21,8 @@ import {
   getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
+  getBooleanDecoder,
+  getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getI64Decoder,
@@ -77,6 +79,7 @@ export type Product = {
   eventsCounter: bigint;
   stages: Array<Stage>;
   currentStageIndex: number;
+  useStages: boolean;
 };
 
 export type ProductArgs = {
@@ -88,6 +91,7 @@ export type ProductArgs = {
   eventsCounter: number | bigint;
   stages: Array<StageArgs>;
   currentStageIndex: number;
+  useStages: boolean;
 };
 
 export function getProductEncoder(): Encoder<ProductArgs> {
@@ -102,6 +106,7 @@ export function getProductEncoder(): Encoder<ProductArgs> {
       ['eventsCounter', getU64Encoder()],
       ['stages', getArrayEncoder(getStageEncoder())],
       ['currentStageIndex', getU8Encoder()],
+      ['useStages', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, discriminator: PRODUCT_DISCRIMINATOR })
   );
@@ -118,6 +123,7 @@ export function getProductDecoder(): Decoder<Product> {
     ['eventsCounter', getU64Decoder()],
     ['stages', getArrayDecoder(getStageDecoder())],
     ['currentStageIndex', getU8Decoder()],
+    ['useStages', getBooleanDecoder()],
   ]);
 }
 

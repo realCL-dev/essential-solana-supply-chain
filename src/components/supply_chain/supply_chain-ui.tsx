@@ -1,12 +1,10 @@
 import { ellipsify, useWalletUi } from '@wallet-ui/react'
 import {
   useProductAccountsQuery,
-  useInitializeProductMutation,
   useLogEventMutation,
   useTransferOwnershipMutation,
   useSupplyChainProgram,
   useSupplyChainProgramId,
-  useCreateProductForm,
   useLogEventForm,
   useProductEventsQuery,
   useProductQuery,
@@ -15,7 +13,7 @@ import {
 } from './supply_chain-data-access'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Input, TextArea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ExplorerLink } from '../cluster/cluster-ui'
 import { ReactNode, useState, useEffect, useCallback, useRef } from 'react'
@@ -23,6 +21,9 @@ import type { Account, Address } from 'gill'
 import QRCode from 'qrcode'
 import QrScanner from 'qr-scanner'
 import Image from 'next/image'
+import { EnhancedCreateProductForm } from './enhanced_create_product_form'
+import { StageDisplay } from './stage_display'
+import { Product } from '@project/anchor'
 
 const QR_CODE_CONFIG = {
   width: 300,
@@ -41,17 +42,7 @@ const INPUT_LIMITS = {
   DESCRIPTION_MAX_LENGTH: 200
 }
 
-
-type ProductData = {
-  owner: Address
-  serialNumber: string
-  description: string
-  status: ProductStatus
-  createdAt: bigint
-  eventsCounter: bigint
-}
-
-type ProductAccount = Account<ProductData>
+type ProductAccount = Account<Product, string>
 
 export function SupplyChainProgramExplorerLink() {
   const programId = useSupplyChainProgramId()
@@ -115,6 +106,7 @@ function ProductCard({ product }: { product: ProductAccount }) {
   
   const productQuery = useProductQuery(product.address as Address)
   const currentProduct = productQuery.data || product
+  const { account } = useWalletUi()
 
   const getStatusColor = (status: ProductStatus) => {
     switch (status) {
@@ -125,6 +117,10 @@ function ProductCard({ product }: { product: ProductAccount }) {
       case ProductStatus.Transferred: return 'bg-purple-100 text-purple-800'
       default: return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  const refreshProduct = () => {
+    productQuery.refetch()
   }
 
   return (
@@ -148,11 +144,28 @@ function ProductCard({ product }: { product: ProductAccount }) {
             <div className="text-xs">
               Events: {currentProduct.data.eventsCounter.toString()}
             </div>
+            {/* Show if product uses stages */}
+            {currentProduct.data.stages && (
+              <div className="text-xs">
+                <span className="px-1 py-0.5 bg-purple-100 text-purple-800 rounded text-xs">
+                  Staged Tracking
+                </span>
+              </div>
+            )}
           </div>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
+          {/* Stage Display - only for staged products */}
+          {currentProduct.data.stages && (
+            <StageDisplay
+              product={currentProduct as any} // Type casting for now
+              userAddress={account?.address}
+              onStageCompleted={refreshProduct}
+            />
+          )}
+
           <Button 
             onClick={() => setShowQRCode(!showQRCode)} 
             variant="outline" 
@@ -206,93 +219,7 @@ function ProductCard({ product }: { product: ProductAccount }) {
 }
 
 export function CreateProductForm() {
-  const { serialNumber, setSerialNumber, description, setDescription, reset, isValid } = useCreateProductForm()
-  const createProductMutation = useInitializeProductMutation()
-  const [lastError, setLastError] = useState<Error | null>(null)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!isValid) return
-    
-    try {
-      setLastError(null)
-      await createProductMutation.mutateAsync({ serialNumber, description })
-      reset()
-    } catch (error) {
-      setLastError(error instanceof Error ? error : new Error(String(error)))
-      console.error('Error creating product:', error)
-      
-      if (error instanceof Error) {
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack,
-          cause: error.cause,
-        })
-      }
-      
-      console.error('Browser info:', {
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        vendor: navigator.vendor,
-      })
-    }
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create New Product</CardTitle>
-        <CardDescription>
-          Register a new product in the supply chain tracking system
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="serialNumber">Serial Number</Label>
-            <Input
-              id="serialNumber"
-              value={serialNumber}
-              onChange={(e) => setSerialNumber(e.target.value)}
-              placeholder="Enter unique product serial number"
-              required
-              maxLength={INPUT_LIMITS.SERIAL_NUMBER_MAX_LENGTH}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter product description"
-              required
-              maxLength={INPUT_LIMITS.DESCRIPTION_MAX_LENGTH}
-            />
-          </div>
-          <Button 
-            type="submit" 
-            disabled={!isValid || createProductMutation.isPending}
-            className="w-full"
-          >
-            {createProductMutation.isPending ? 'Creating Product...' : 'Create Product'}
-          </Button>
-          {lastError && process.env.NODE_ENV === 'development' && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded text-sm">
-              <details>
-                <summary className="cursor-pointer font-medium text-red-800">
-                  Debug Information (Development Only)
-                </summary>
-                <pre className="mt-2 text-red-700 overflow-auto">
-                  {JSON.stringify(lastError, null, 2)}
-                </pre>
-              </details>
-            </div>
-          )}
-        </form>
-      </CardContent>
-    </Card>
-  )
+  return <EnhancedCreateProductForm />
 }
 
 function LogEventForm({ productAddress, onClose }: { 
@@ -316,7 +243,7 @@ function LogEventForm({ productAddress, onClose }: {
   }
 
   return (
-    <div className="border rounded-lg p-4 bg-white">
+    <div className="border rounded-lg p-4 bg-white dark:bg-accent">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Log Event</h3>
         <Button
@@ -335,19 +262,15 @@ function LogEventForm({ productAddress, onClose }: {
             id="eventType"
             value={eventType}
             onChange={(e) => setEventType(parseInt(e.target.value) as EventType)}
-            className="w-full p-2 border rounded-lg bg-white"
+            className="w-full p-2 border rounded-lg bg-white dark:bg-accent dark:text-gray-200"
           >
-            <option value={EventType.Created}>Created</option>
-            <option value={EventType.Shipped}>Shipped</option>
-            <option value={EventType.Received}>Received</option>
-            <option value={EventType.QualityCheck}>Quality Check</option>
-            <option value={EventType.Delivered}>Delivered</option>
-            <option value={EventType.Other}>Other</option>
+            <option value={EventType.Ongoing}>Ongoing</option>
+            <option value={EventType.Complete}>Complete</option>
           </select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="eventDescription">Description</Label>
-          <Input
+          <TextArea
             id="eventDescription"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -436,12 +359,8 @@ function EventsList({ productAddress }: { productAddress: Address }) {
 
   const getEventTypeColor = (eventType: EventType) => {
     switch (eventType) {
-      case EventType.Created: return 'bg-blue-100 text-blue-800'
-      case EventType.Shipped: return 'bg-yellow-100 text-yellow-800'
-      case EventType.Received: return 'bg-green-100 text-green-800'
-      case EventType.QualityCheck: return 'bg-purple-100 text-purple-800'
-      case EventType.Delivered: return 'bg-green-100 text-green-800'
-      case EventType.Other: return 'bg-gray-100 text-gray-800'
+      case EventType.Ongoing: return 'bg-blue-100 text-blue-800'
+      case EventType.Complete: return 'bg-green-100 text-green-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -469,7 +388,7 @@ function EventsList({ productAddress }: { productAddress: Address }) {
           <div key={index} className="border-b last:border-b-0 pb-2 last:pb-0">
             <div className="flex items-center justify-between mb-1">
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.data.eventType)}`}>
-                {EventType[event.data.eventType]}
+                {event.data.stageName ? `${event.data.stageName} -- ` : ''}{EventType[event.data.eventType]}
               </span>
               <span className="text-xs text-gray-500">
                 Event #{event.data.eventIndex.toString()}
@@ -928,12 +847,8 @@ function QRScanEventForm({ productAddress, onClose }: {
             onChange={(e) => setEventType(parseInt(e.target.value) as EventType)}
             className="w-full p-3 border rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value={EventType.Created}>Created</option>
-            <option value={EventType.Shipped}>Shipped</option>
-            <option value={EventType.Received}>Received</option>
-            <option value={EventType.QualityCheck}>Quality Check</option>
-            <option value={EventType.Delivered}>Delivered</option>
-            <option value={EventType.Other}>Other</option>
+            <option value={EventType.Ongoing}>Ongoing</option>
+            <option value={EventType.Complete}>Complete</option>
           </select>
         </div>
         <div className="space-y-2">

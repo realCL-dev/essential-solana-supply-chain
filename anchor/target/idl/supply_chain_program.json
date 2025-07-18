@@ -1,5 +1,5 @@
 {
-  "address": "AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc",
+  "address": "7dBmFPmotzJcBjFzAtgkxM3ctX6X6GiHhVTHLYbHfxeE",
   "metadata": {
     "name": "supply_chain_program",
     "version": "0.1.0",
@@ -7,35 +7,6 @@
     "description": "Created with Anchor"
   },
   "instructions": [
-    {
-      "name": "complete_stage",
-      "discriminator": [
-        14,
-        56,
-        73,
-        109,
-        170,
-        85,
-        63,
-        218
-      ],
-      "accounts": [
-        {
-          "name": "product_account",
-          "writable": true
-        },
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
     {
       "name": "initialize_product",
       "discriminator": [
@@ -166,20 +137,16 @@
       ],
       "args": [
         {
-          "name": "stage_name",
-          "type": "string"
-        },
-        {
-          "name": "description",
-          "type": "string"
-        },
-        {
           "name": "event_type",
           "type": {
             "defined": {
               "name": "EventType"
             }
           }
+        },
+        {
+          "name": "description",
+          "type": "string"
         }
       ]
     },
@@ -291,6 +258,11 @@
       "code": 6008,
       "name": "StageNotCompleted",
       "msg": "Current stage not completed"
+    },
+    {
+      "code": 6009,
+      "name": "ProductAlreadyDelivered",
+      "msg": "Product already delivered"
     }
   ],
   "types": [
@@ -354,6 +326,10 @@
           {
             "name": "current_stage_index",
             "type": "u8"
+          },
+          {
+            "name": "use_stages",
+            "type": "bool"
           }
         ]
       }

@@ -17,15 +17,15 @@ import {
   getStructDecoder,
   getStructEncoder,
   transformEncoder,
+  type AccountMeta,
+  type AccountSignerMeta,
   type Address,
-  type Codec,
-  type Decoder,
-  type Encoder,
-  type IAccountMeta,
-  type IAccountSignerMeta,
-  type IInstruction,
-  type IInstructionWithAccounts,
-  type IInstructionWithData,
+  type FixedSizeCodec,
+  type FixedSizeDecoder,
+  type FixedSizeEncoder,
+  type Instruction,
+  type InstructionWithAccounts,
+  type InstructionWithData,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
@@ -47,22 +47,22 @@ export function getTransferOwnershipDiscriminatorBytes() {
 
 export type TransferOwnershipInstruction<
   TProgram extends string = typeof SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-  TAccountProductAccount extends string | IAccountMeta<string> = string,
-  TAccountCurrentOwner extends string | IAccountMeta<string> = string,
+  TAccountProductAccount extends string | AccountMeta<string> = string,
+  TAccountCurrentOwner extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
-  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
-> = IInstruction<TProgram> &
-  IInstructionWithData<Uint8Array> &
-  IInstructionWithAccounts<
+    | AccountMeta<string> = '11111111111111111111111111111111',
+  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+> = Instruction<TProgram> &
+  InstructionWithData<ReadonlyUint8Array> &
+  InstructionWithAccounts<
     [
       TAccountProductAccount extends string
         ? WritableAccount<TAccountProductAccount>
         : TAccountProductAccount,
       TAccountCurrentOwner extends string
         ? WritableSignerAccount<TAccountCurrentOwner> &
-            IAccountSignerMeta<TAccountCurrentOwner>
+            AccountSignerMeta<TAccountCurrentOwner>
         : TAccountCurrentOwner,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
@@ -78,7 +78,7 @@ export type TransferOwnershipInstructionData = {
 
 export type TransferOwnershipInstructionDataArgs = { newOwner: Address };
 
-export function getTransferOwnershipInstructionDataEncoder(): Encoder<TransferOwnershipInstructionDataArgs> {
+export function getTransferOwnershipInstructionDataEncoder(): FixedSizeEncoder<TransferOwnershipInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -88,14 +88,14 @@ export function getTransferOwnershipInstructionDataEncoder(): Encoder<TransferOw
   );
 }
 
-export function getTransferOwnershipInstructionDataDecoder(): Decoder<TransferOwnershipInstructionData> {
+export function getTransferOwnershipInstructionDataDecoder(): FixedSizeDecoder<TransferOwnershipInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['newOwner', getAddressDecoder()],
   ]);
 }
 
-export function getTransferOwnershipInstructionDataCodec(): Codec<
+export function getTransferOwnershipInstructionDataCodec(): FixedSizeCodec<
   TransferOwnershipInstructionDataArgs,
   TransferOwnershipInstructionData
 > {
@@ -181,7 +181,7 @@ export function getTransferOwnershipInstruction<
 
 export type ParsedTransferOwnershipInstruction<
   TProgram extends string = typeof SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
+  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
@@ -194,11 +194,11 @@ export type ParsedTransferOwnershipInstruction<
 
 export function parseTransferOwnershipInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[],
+  TAccountMetas extends readonly AccountMeta[],
 >(
-  instruction: IInstruction<TProgram> &
-    IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>
+  instruction: Instruction<TProgram> &
+    InstructionWithAccounts<TAccountMetas> &
+    InstructionWithData<ReadonlyUint8Array>
 ): ParsedTransferOwnershipInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
     // TODO: Coded error.

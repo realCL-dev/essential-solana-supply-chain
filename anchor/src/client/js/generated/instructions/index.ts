@@ -6,7 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './completeStage';
 export * from './initializeProduct';
 export * from './logEvent';
 export * from './transferOwnership';

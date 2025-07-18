@@ -162,7 +162,6 @@ describe('supply_chain_events', () => {
     if (owner1 && productAccountAddress) {
       const eventType: EventType = EventType.Ongoing
       const description = 'Test Event 1'
-      const stageName = 'Initial Stage'
 
       const productAccount = await fetchProduct(rpc, productAccountAddress)
 
@@ -178,9 +177,8 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: productEventAddress,
-        stageName,
-        description,
         eventType,
+        description,
         signer: owner1,
       })
 
@@ -202,19 +200,12 @@ describe('supply_chain_events', () => {
       const newProductAccount = await fetchProduct(rpc, productAccount.address)
       expect(newProductAccount.data.eventsCounter).toBe(1n)
 
-      // Verify a new stage was created
-      expect(newProductAccount.data.stages).toHaveLength(1)
-      expect(newProductAccount.data.stages[0].name).toBe(stageName)
-      expect(newProductAccount.data.stages[0].owner).toEqual({ "__option": "Some", "value": owner1.address })
-      expect(newProductAccount.data.stages[0].completed).toBe(false)
-
       // Verify the event
       const productEvent = await fetchSupplyChainEvent(rpc, productEventAddress)
       expect(productEvent.data).toMatchObject({
         product: productAccount.address,
         eventType,
         description,
-        stageName,
         eventIndex: 0n,
       })
     }
@@ -228,7 +219,6 @@ describe('supply_chain_events', () => {
     if (owner1 && owner2 && productAccountAddress) {
       const eventType: EventType = EventType.Ongoing
       const description = 'Unauthorized Event'
-      const stageName = 'Unauthorized Stage'
       const productAccount = await fetchProduct(rpc, productAccountAddress)
 
       const [productEventAddress] = await getProgramDerivedAddress({
@@ -243,7 +233,6 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: productEventAddress,
-        stageName,
         description,
         eventType,
         signer: owner2, // Different owner
@@ -295,9 +284,8 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: productEventAddress,
-        stageName,
-        description,
         eventType,
+        description,
         signer: owner1, // First stage owner
       })
 
@@ -321,7 +309,7 @@ describe('supply_chain_events', () => {
         product: productAccount.address,
         eventType,
         description,
-        stageName: 'Farm Stage', // Should use current stage name
+        stageName,
         eventIndex: 0n,
       })
     }
@@ -349,7 +337,6 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: productEventAddress,
-        stageName,
         description,
         eventType,
         signer: owner2, // Factory stage owner, but not current stage
@@ -401,7 +388,6 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: productEventAddress,
-        stageName,
         description,
         eventType,
         signer: owner1,
@@ -461,7 +447,6 @@ describe('supply_chain_events', () => {
       const completeEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: completeEventAddress,
-        stageName: completeStageName,
         description: completeDescription,
         eventType: completeEventType,
         signer: owner2,
@@ -500,7 +485,6 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: updatedProductAccount.address,
         eventAccount: productEventAddress,
-        stageName,
         description,
         eventType,
         signer: owner2, // Same owner, but stage is now completed
@@ -553,7 +537,6 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: productEventAddress,
-        stageName,
         description,
         eventType,
         signer: owner3, // Delivery stage owner, now current stage
@@ -612,7 +595,6 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: productEventAddress,
-        stageName,
         description,
         eventType,
         signer: owner3, // Delivery stage owner
@@ -671,7 +653,6 @@ describe('supply_chain_events', () => {
       const logEventInstruction = getLogEventInstruction({
         productAccount: productAccount.address,
         eventAccount: productEventAddress,
-        stageName,
         description,
         eventType,
         signer: owner2, // Factory stage owner, but current stage is delivery

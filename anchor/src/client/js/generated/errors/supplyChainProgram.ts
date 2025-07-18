@@ -32,6 +32,8 @@ export const SUPPLY_CHAIN_PROGRAM_ERROR__NO_STAGES = 0x1776; // 6006
 export const SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_INDEX = 0x1777; // 6007
 /** StageNotCompleted: Current stage not completed */
 export const SUPPLY_CHAIN_PROGRAM_ERROR__STAGE_NOT_COMPLETED = 0x1778; // 6008
+/** ProductAlreadyDelivered: Product already delivered */
+export const SUPPLY_CHAIN_PROGRAM_ERROR__PRODUCT_ALREADY_DELIVERED = 0x1779; // 6009
 
 export type SupplyChainProgramError =
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__COUNTER_OVERFLOW
@@ -40,6 +42,7 @@ export type SupplyChainProgramError =
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_INDEX
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_NAME
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__NO_STAGES
+  | typeof SUPPLY_CHAIN_PROGRAM_ERROR__PRODUCT_ALREADY_DELIVERED
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__STAGE_NOT_COMPLETED
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__TOO_MANY_STAGES
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__UNAUTHORIZED_ACCESS;
@@ -55,6 +58,7 @@ if (process.env.NODE_ENV !== 'production') {
     [SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_INDEX]: `Invalid stage index`,
     [SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_NAME]: `Invalid stage name: must be 1-50 characters`,
     [SUPPLY_CHAIN_PROGRAM_ERROR__NO_STAGES]: `No stages defined`,
+    [SUPPLY_CHAIN_PROGRAM_ERROR__PRODUCT_ALREADY_DELIVERED]: `Product already delivered`,
     [SUPPLY_CHAIN_PROGRAM_ERROR__STAGE_NOT_COMPLETED]: `Current stage not completed`,
     [SUPPLY_CHAIN_PROGRAM_ERROR__TOO_MANY_STAGES]: `Too many stages: maximum 10 stages allowed`,
     [SUPPLY_CHAIN_PROGRAM_ERROR__UNAUTHORIZED_ACCESS]: `Unauthorized access`,

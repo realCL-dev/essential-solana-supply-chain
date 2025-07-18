@@ -10,9 +10,9 @@ import {
   combineCodec,
   getEnumDecoder,
   getEnumEncoder,
-  type Codec,
-  type Decoder,
-  type Encoder,
+  type FixedSizeCodec,
+  type FixedSizeDecoder,
+  type FixedSizeEncoder,
 } from 'gill';
 
 export enum EventType {
@@ -22,14 +22,14 @@ export enum EventType {
 
 export type EventTypeArgs = EventType;
 
-export function getEventTypeEncoder(): Encoder<EventTypeArgs> {
+export function getEventTypeEncoder(): FixedSizeEncoder<EventTypeArgs> {
   return getEnumEncoder(EventType);
 }
 
-export function getEventTypeDecoder(): Decoder<EventType> {
+export function getEventTypeDecoder(): FixedSizeDecoder<EventType> {
   return getEnumDecoder(EventType);
 }
 
-export function getEventTypeCodec(): Codec<EventTypeArgs, EventType> {
+export function getEventTypeCodec(): FixedSizeCodec<EventTypeArgs, EventType> {
   return combineCodec(getEventTypeEncoder(), getEventTypeDecoder());
 }
