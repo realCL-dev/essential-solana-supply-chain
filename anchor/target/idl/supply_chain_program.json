@@ -1,5 +1,5 @@
 {
-  "address": "AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc",
+  "address": "7dBmFPmotzJcBjFzAtgkxM3ctX6X6GiHhVTHLYbHfxeE",
   "metadata": {
     "name": "supply_chain_program",
     "version": "0.1.0",
@@ -66,6 +66,18 @@
         {
           "name": "description",
           "type": "string"
+        },
+        {
+          "name": "stages",
+          "type": {
+            "option": {
+              "vec": {
+                "defined": {
+                  "name": "Stage"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -221,6 +233,36 @@
       "code": 6003,
       "name": "CounterOverflow",
       "msg": "Counter overflow"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidStageName",
+      "msg": "Invalid stage name: must be 1-50 characters"
+    },
+    {
+      "code": 6005,
+      "name": "TooManyStages",
+      "msg": "Too many stages: maximum 10 stages allowed"
+    },
+    {
+      "code": 6006,
+      "name": "NoStages",
+      "msg": "No stages defined"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidStageIndex",
+      "msg": "Invalid stage index"
+    },
+    {
+      "code": 6008,
+      "name": "StageNotCompleted",
+      "msg": "Current stage not completed"
+    },
+    {
+      "code": 6009,
+      "name": "ProductAlreadyDelivered",
+      "msg": "Product already delivered"
     }
   ],
   "types": [
@@ -230,22 +272,10 @@
         "kind": "enum",
         "variants": [
           {
-            "name": "Created"
+            "name": "Ongoing"
           },
           {
-            "name": "Shipped"
-          },
-          {
-            "name": "Received"
-          },
-          {
-            "name": "QualityCheck"
-          },
-          {
-            "name": "Delivered"
-          },
-          {
-            "name": "Other"
+            "name": "Complete"
           }
         ]
       }
@@ -282,6 +312,24 @@
           {
             "name": "events_counter",
             "type": "u64"
+          },
+          {
+            "name": "stages",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Stage"
+                }
+              }
+            }
+          },
+          {
+            "name": "current_stage_index",
+            "type": "u8"
+          },
+          {
+            "name": "use_stages",
+            "type": "bool"
           }
         ]
       }
@@ -310,6 +358,28 @@
       }
     },
     {
+      "name": "Stage",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "owner",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "completed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
       "name": "SupplyChainEvent",
       "type": {
         "kind": "struct",
@@ -328,6 +398,10 @@
           },
           {
             "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "stage_name",
             "type": "string"
           },
           {

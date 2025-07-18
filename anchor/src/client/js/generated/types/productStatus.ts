@@ -10,9 +10,9 @@ import {
   combineCodec,
   getEnumDecoder,
   getEnumEncoder,
-  type Codec,
-  type Decoder,
-  type Encoder,
+  type FixedSizeCodec,
+  type FixedSizeDecoder,
+  type FixedSizeEncoder,
 } from 'gill';
 
 export enum ProductStatus {
@@ -25,15 +25,15 @@ export enum ProductStatus {
 
 export type ProductStatusArgs = ProductStatus;
 
-export function getProductStatusEncoder(): Encoder<ProductStatusArgs> {
+export function getProductStatusEncoder(): FixedSizeEncoder<ProductStatusArgs> {
   return getEnumEncoder(ProductStatus);
 }
 
-export function getProductStatusDecoder(): Decoder<ProductStatus> {
+export function getProductStatusDecoder(): FixedSizeDecoder<ProductStatus> {
   return getEnumDecoder(ProductStatus);
 }
 
-export function getProductStatusCodec(): Codec<
+export function getProductStatusCodec(): FixedSizeCodec<
   ProductStatusArgs,
   ProductStatus
 > {

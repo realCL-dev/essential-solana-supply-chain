@@ -19,7 +19,7 @@ import {
   PRODUCT_DISCRIMINATOR
 } from '@project/anchor'
 import type { Address } from 'gill'
-import { getProgramDerivedAddress, getBytesEncoder, getAddressEncoder, getU64Encoder } from 'gill'
+import { getProgramDerivedAddress, getBytesEncoder, getAddressEncoder, getU64Encoder, getUtf8Encoder } from 'gill'
 
 const TRANSACTION_PROCESSING_DELAY = 2000
 
@@ -48,10 +48,21 @@ export function useInitializeProductMutation() {
   return useMutation({
     mutationFn: async ({ serialNumber, description }: { serialNumber: string; description: string }) => {
       try {
+        const [productAccountAddress] = await getProgramDerivedAddress({
+          programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
+          seeds: [
+            'product',
+            getAddressEncoder().encode(signer.address),
+            getUtf8Encoder().encode(serialNumber),
+          ],
+        })
+
         const instruction = await getInitializeProductInstructionAsync({
+          productAccount: productAccountAddress,
           owner: signer,
           serialNumber,
           description,
+          stages:null, // No stages for this mutation
         })
         
         const result = await signAndSend(instruction, signer)
@@ -344,11 +355,11 @@ export function useCreateProductForm() {
 }
 
 export function useLogEventForm() {
-  const [eventType, setEventType] = useState<EventType>(EventType.Created)
+  const [eventType, setEventType] = useState<EventType>(EventType.Ongoing)
   const [description, setDescription] = useState('')
 
   const reset = () => {
-    setEventType(EventType.Created)
+    setEventType(EventType.Ongoing)
     setDescription('')
   }
 
@@ -360,6 +371,170 @@ export function useLogEventForm() {
     reset,
     isValid: description.trim().length > 0
   }
+}
+
+// Stage management types
+export type StageInput = {
+  name: string
+  wallet?: string
+}
+
+export function useCreateProductWithStagesForm() {
+  const [serialNumber, setSerialNumber] = useState('')
+  const [description, setDescription] = useState('')
+  const [useStages, setUseStages] = useState(false)
+  const [stages, setStages] = useState<StageInput[]>([])
+
+  const reset = () => {
+    setSerialNumber('')
+    setDescription('')
+    setUseStages(false)
+    setStages([])
+  }
+
+  const addStage = () => {
+    setStages([...stages, { name: '', wallet: '' }])
+  }
+
+  const updateStage = (index: number, field: keyof StageInput, value: string) => {
+    const newStages = [...stages]
+    newStages[index] = { ...newStages[index], [field]: value || undefined }
+    setStages(newStages)
+  }
+
+  const removeStage = (index: number) => {
+    setStages(stages.filter((_, i) => i !== index))
+  }
+
+  const loadTemplate = () => {
+    const templateStages: StageInput[] = [
+      { name: 'Farm', wallet: '' },
+      { name: 'WareHouse', wallet: '' },
+      { name: 'Certification', wallet: '' },
+      { name: 'Port', wallet: '' },
+      { name: 'Factory', wallet: '' },
+      { name: 'ShopX', wallet: '' },
+    ]
+    setStages(templateStages)
+    setUseStages(true)
+  }
+
+  const isValidStages = stages.length > 0 && stages.every(stage => stage.name.trim().length > 0)
+
+  return {
+    serialNumber,
+    setSerialNumber,
+    description,
+    setDescription,
+    useStages,
+    setUseStages,
+    stages,
+    setStages,
+    addStage,
+    updateStage,
+    removeStage,
+    loadTemplate,
+    reset,
+    isValid: serialNumber.trim().length > 0 && description.trim().length > 0 && (!useStages || isValidStages)
+  }
+}
+
+// Since we don't have the anchor client generated yet, I'll create placeholder mutation functions
+// These would normally use the actual anchor client functions
+
+export function useInitializeProductWithStagesMutation() {
+  const { cluster } = useWalletUi()
+  const queryClient = useQueryClient()
+  const signer = useWalletUiSigner()
+  const signAndSend = useWalletTransactionSignAndSend()
+
+  return useMutation({
+    mutationFn: async ({ 
+      serialNumber, 
+      description, 
+      stages 
+    }: { 
+      serialNumber: string
+      description: string
+      stages: StageInput[] 
+    }) => {
+      try {
+        const [productAccountAddress] = await getProgramDerivedAddress({
+          programAddress: SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS,
+          seeds: [
+            'product',
+            getAddressEncoder().encode(signer.address),
+            getUtf8Encoder().encode(serialNumber),
+          ],
+        })
+
+        const mappedStages = stages.map(stage => ({
+          name: stage.name,
+          owner: stage.wallet && stage.wallet.trim() !== '' ? stage.wallet as Address : null,
+          completed: false
+        }))
+
+        const instruction = await getInitializeProductInstructionAsync({
+          productAccount: productAccountAddress,
+          owner: signer,
+          serialNumber,
+          description,
+          stages: mappedStages
+        })
+        
+        const result = await signAndSend(instruction, signer)
+        return result
+      } catch (error) {
+        console.error('Error in mutationFn:', error)
+        console.error('Error type:', typeof error)
+        console.error('Error constructor:', error?.constructor?.name)
+        
+        if (error instanceof Error) {
+          console.error('Error message:', error.message)
+          console.error('Error stack:', error.stack)
+        }
+        
+        throw error
+      }
+    },
+
+    onSuccess: async (tx) => {
+      toastTx(tx)
+      
+      await new Promise(resolve => setTimeout(resolve, TRANSACTION_PROCESSING_DELAY))
+      
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['supply_chain', 'products', { cluster }] }),
+        queryClient.invalidateQueries({ queryKey: ['supply_chain'] }),
+        queryClient.refetchQueries({ queryKey: ['supply_chain', 'products', { cluster }] })
+      ])
+    },
+
+    onError: (error) => {
+      console.error('Initialize product error:', error)
+      let errorMessage = 'Failed to initialize product'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('0x7d6') || error.message.includes('ConstraintSeeds')) {
+          errorMessage = 'Product creation failed: Invalid account setup. Please try again.'
+        } else if (error.message.includes('0x1772') || error.message.includes('UnauthorizedAccess')) {
+          errorMessage = 'Product creation failed: Unauthorized access. Check wallet permissions.'
+        } else if (error.message.includes('insufficient funds') || error.message.includes('0x1')) {
+          errorMessage = 'Product creation failed: Insufficient SOL for transaction fees.'
+        } else if (error.message.includes('User rejected') || error.message.includes('rejected')) {
+          errorMessage = 'Transaction was cancelled by user.'
+        } else if (error.message.includes('timeout') || error.message.includes('network')) {
+          errorMessage = 'Product creation failed: Network timeout. Please check your connection and try again.'
+        } else {
+          errorMessage = `Product creation failed: ${error.message}`
+        }
+      } else {
+        errorMessage = 'Product creation failed: Unknown error'
+      }
+      
+      toast.error(errorMessage)
+    },
+  })
 }
 
 export { EventType, ProductStatus }

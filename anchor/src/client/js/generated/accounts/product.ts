@@ -19,6 +19,10 @@ import {
   fixEncoderSize,
   getAddressDecoder,
   getAddressEncoder,
+  getArrayDecoder,
+  getArrayEncoder,
+  getBooleanDecoder,
+  getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getI64Decoder,
@@ -29,6 +33,8 @@ import {
   getU32Encoder,
   getU64Decoder,
   getU64Encoder,
+  getU8Decoder,
+  getU8Encoder,
   getUtf8Decoder,
   getUtf8Encoder,
   transformEncoder,
@@ -47,8 +53,12 @@ import {
 import {
   getProductStatusDecoder,
   getProductStatusEncoder,
+  getStageDecoder,
+  getStageEncoder,
   type ProductStatus,
   type ProductStatusArgs,
+  type Stage,
+  type StageArgs,
 } from '../types';
 
 export const PRODUCT_DISCRIMINATOR = new Uint8Array([
@@ -67,6 +77,9 @@ export type Product = {
   status: ProductStatus;
   createdAt: bigint;
   eventsCounter: bigint;
+  stages: Array<Stage>;
+  currentStageIndex: number;
+  useStages: boolean;
 };
 
 export type ProductArgs = {
@@ -76,6 +89,9 @@ export type ProductArgs = {
   status: ProductStatusArgs;
   createdAt: number | bigint;
   eventsCounter: number | bigint;
+  stages: Array<StageArgs>;
+  currentStageIndex: number;
+  useStages: boolean;
 };
 
 export function getProductEncoder(): Encoder<ProductArgs> {
@@ -88,6 +104,9 @@ export function getProductEncoder(): Encoder<ProductArgs> {
       ['status', getProductStatusEncoder()],
       ['createdAt', getI64Encoder()],
       ['eventsCounter', getU64Encoder()],
+      ['stages', getArrayEncoder(getStageEncoder())],
+      ['currentStageIndex', getU8Encoder()],
+      ['useStages', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, discriminator: PRODUCT_DISCRIMINATOR })
   );
@@ -102,6 +121,9 @@ export function getProductDecoder(): Decoder<Product> {
     ['status', getProductStatusDecoder()],
     ['createdAt', getI64Decoder()],
     ['eventsCounter', getU64Decoder()],
+    ['stages', getArrayDecoder(getStageDecoder())],
+    ['currentStageIndex', getU8Decoder()],
+    ['useStages', getBooleanDecoder()],
   ]);
 }
 

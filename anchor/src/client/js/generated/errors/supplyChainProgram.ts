@@ -22,11 +22,29 @@ export const SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_DESCRIPTION = 0x1771; // 6001
 export const SUPPLY_CHAIN_PROGRAM_ERROR__UNAUTHORIZED_ACCESS = 0x1772; // 6002
 /** CounterOverflow: Counter overflow */
 export const SUPPLY_CHAIN_PROGRAM_ERROR__COUNTER_OVERFLOW = 0x1773; // 6003
+/** InvalidStageName: Invalid stage name: must be 1-50 characters */
+export const SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_NAME = 0x1774; // 6004
+/** TooManyStages: Too many stages: maximum 10 stages allowed */
+export const SUPPLY_CHAIN_PROGRAM_ERROR__TOO_MANY_STAGES = 0x1775; // 6005
+/** NoStages: No stages defined */
+export const SUPPLY_CHAIN_PROGRAM_ERROR__NO_STAGES = 0x1776; // 6006
+/** InvalidStageIndex: Invalid stage index */
+export const SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_INDEX = 0x1777; // 6007
+/** StageNotCompleted: Current stage not completed */
+export const SUPPLY_CHAIN_PROGRAM_ERROR__STAGE_NOT_COMPLETED = 0x1778; // 6008
+/** ProductAlreadyDelivered: Product already delivered */
+export const SUPPLY_CHAIN_PROGRAM_ERROR__PRODUCT_ALREADY_DELIVERED = 0x1779; // 6009
 
 export type SupplyChainProgramError =
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__COUNTER_OVERFLOW
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_DESCRIPTION
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_SERIAL_NUMBER
+  | typeof SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_INDEX
+  | typeof SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_NAME
+  | typeof SUPPLY_CHAIN_PROGRAM_ERROR__NO_STAGES
+  | typeof SUPPLY_CHAIN_PROGRAM_ERROR__PRODUCT_ALREADY_DELIVERED
+  | typeof SUPPLY_CHAIN_PROGRAM_ERROR__STAGE_NOT_COMPLETED
+  | typeof SUPPLY_CHAIN_PROGRAM_ERROR__TOO_MANY_STAGES
   | typeof SUPPLY_CHAIN_PROGRAM_ERROR__UNAUTHORIZED_ACCESS;
 
 let supplyChainProgramErrorMessages:
@@ -37,6 +55,12 @@ if (process.env.NODE_ENV !== 'production') {
     [SUPPLY_CHAIN_PROGRAM_ERROR__COUNTER_OVERFLOW]: `Counter overflow`,
     [SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_DESCRIPTION]: `Invalid description: must be 1-200 characters`,
     [SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_SERIAL_NUMBER]: `Invalid serial number: must be 1-50 characters`,
+    [SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_INDEX]: `Invalid stage index`,
+    [SUPPLY_CHAIN_PROGRAM_ERROR__INVALID_STAGE_NAME]: `Invalid stage name: must be 1-50 characters`,
+    [SUPPLY_CHAIN_PROGRAM_ERROR__NO_STAGES]: `No stages defined`,
+    [SUPPLY_CHAIN_PROGRAM_ERROR__PRODUCT_ALREADY_DELIVERED]: `Product already delivered`,
+    [SUPPLY_CHAIN_PROGRAM_ERROR__STAGE_NOT_COMPLETED]: `Current stage not completed`,
+    [SUPPLY_CHAIN_PROGRAM_ERROR__TOO_MANY_STAGES]: `Too many stages: maximum 10 stages allowed`,
     [SUPPLY_CHAIN_PROGRAM_ERROR__UNAUTHORIZED_ACCESS]: `Unauthorized access`,
   };
 }

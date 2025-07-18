@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/supply_chain_program.json`.
  */
 export type SupplyChainProgram = {
-  "address": "AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc",
+  "address": "7dBmFPmotzJcBjFzAtgkxM3ctX6X6GiHhVTHLYbHfxeE",
   "metadata": {
     "name": "supplyChainProgram",
     "version": "0.1.0",
@@ -72,6 +72,18 @@ export type SupplyChainProgram = {
         {
           "name": "description",
           "type": "string"
+        },
+        {
+          "name": "stages",
+          "type": {
+            "option": {
+              "vec": {
+                "defined": {
+                  "name": "stage"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -227,6 +239,36 @@ export type SupplyChainProgram = {
       "code": 6003,
       "name": "counterOverflow",
       "msg": "Counter overflow"
+    },
+    {
+      "code": 6004,
+      "name": "invalidStageName",
+      "msg": "Invalid stage name: must be 1-50 characters"
+    },
+    {
+      "code": 6005,
+      "name": "tooManyStages",
+      "msg": "Too many stages: maximum 10 stages allowed"
+    },
+    {
+      "code": 6006,
+      "name": "noStages",
+      "msg": "No stages defined"
+    },
+    {
+      "code": 6007,
+      "name": "invalidStageIndex",
+      "msg": "Invalid stage index"
+    },
+    {
+      "code": 6008,
+      "name": "stageNotCompleted",
+      "msg": "Current stage not completed"
+    },
+    {
+      "code": 6009,
+      "name": "productAlreadyDelivered",
+      "msg": "Product already delivered"
     }
   ],
   "types": [
@@ -236,22 +278,10 @@ export type SupplyChainProgram = {
         "kind": "enum",
         "variants": [
           {
-            "name": "created"
+            "name": "ongoing"
           },
           {
-            "name": "shipped"
-          },
-          {
-            "name": "received"
-          },
-          {
-            "name": "qualityCheck"
-          },
-          {
-            "name": "delivered"
-          },
-          {
-            "name": "other"
+            "name": "complete"
           }
         ]
       }
@@ -288,6 +318,24 @@ export type SupplyChainProgram = {
           {
             "name": "eventsCounter",
             "type": "u64"
+          },
+          {
+            "name": "stages",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "stage"
+                }
+              }
+            }
+          },
+          {
+            "name": "currentStageIndex",
+            "type": "u8"
+          },
+          {
+            "name": "useStages",
+            "type": "bool"
           }
         ]
       }
@@ -316,6 +364,28 @@ export type SupplyChainProgram = {
       }
     },
     {
+      "name": "stage",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "owner",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "completed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
       "name": "supplyChainEvent",
       "type": {
         "kind": "struct",
@@ -334,6 +404,10 @@ export type SupplyChainProgram = {
           },
           {
             "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "stageName",
             "type": "string"
           },
           {

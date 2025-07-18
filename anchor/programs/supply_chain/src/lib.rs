@@ -9,7 +9,7 @@ mod state;
 
 use state::*;
 
-declare_id!("AiNohysKLFRjwxjsw4Rmg5t5vm6R9wEL6qQxjDtuxfcc");
+declare_id!("7dBmFPmotzJcBjFzAtgkxM3ctX6X6GiHhVTHLYbHfxeE");
 
 #[program]
 pub mod supply_chain_program {
@@ -19,14 +19,15 @@ pub mod supply_chain_program {
         ctx: Context<InitializeProduct>,
         serial_number: String,
         description: String,
+        stages: Option<Vec<Stage>>,
     ) -> Result<()> {
-        process_initialize_product(ctx, serial_number, description)
+        process_initialize_product(ctx, serial_number, description, stages)
     }
 
     pub fn log_event(
         ctx: Context<LogEvent>,
         event_type: EventType,
-        description: String,
+        description: String
     ) -> Result<()> {
         process_log_event(ctx, event_type, description)
     }
