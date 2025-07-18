@@ -1,11 +1,7 @@
 // Here we export some useful types and functions for interacting with the Anchor program.
 import { Account, address, Address, SolanaClient } from 'gill'
 import { SolanaClusterId } from '@wallet-ui/react'
-import { 
-  Product, 
-  SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS, 
-  fetchAllProduct 
-} from './client/js'
+import { Product, SUPPLY_CHAIN_PROGRAM_PROGRAM_ADDRESS, fetchAllProduct } from './client/js'
 import SupplyChainProgramIDL from '../target/idl/supply_chain_program.json'
 
 export type ProductAccount = Account<Product, string>

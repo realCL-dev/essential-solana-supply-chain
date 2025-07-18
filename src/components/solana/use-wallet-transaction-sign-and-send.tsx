@@ -38,7 +38,7 @@ export function useWalletTransactionSignAndSend() {
         } catch (error) {
           retries--
           if (retries === 0) throw error
-          await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry
+          await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1s before retry
         }
       }
 
@@ -59,7 +59,7 @@ export function useWalletTransactionSignAndSend() {
       return getBase58Decoder().decode(signature)
     } catch (error) {
       console.error('Transaction signing error:', error)
-      
+
       if (error instanceof Error) {
         throw new Error(`Error processing the transaction: ${error.message}`)
       }
